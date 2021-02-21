@@ -170,6 +170,8 @@
                 //マーカー配置
                 const markers = new Array();
                 const infoWindows = new Array();
+                let old_infoWindow = -1;
+                let old_marker = -1;
                 for (i = 0; i < data.length; i++) {
                     if (data[i].price >=price_l && data[i].price <=price_u &&
                         data[i].floorarea >= floorarea_l && data[i].floorarea <= floorarea_u) {
@@ -185,10 +187,15 @@
                         let infoWindow = infoWindows[i];
                         marker.addListener("click", () => {
                             infoWindow.open(map, marker);
+                            if (old_marker !== -1) {
+                                old_infoWindow.close(map, old_marker);
+                            }
+                            old_infoWindow = infoWindow;
+                            old_marker = marker;
                         });
-                        marker.addListener("dblclick", () => {
-                            infoWindow.close(map, marker);
-                        });
+                        // marker.addListener("dblclick", () => {
+                        //     infoWindow.close(map, marker);
+                        // });
                     }
                 }
             }
