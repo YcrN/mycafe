@@ -103,6 +103,60 @@ select:hover{
   display: none;
 }
 
+/* リストで追加 */
+.listarea{
+  margin: 10px;
+  max-width: 900px;
+}
+#listItem > li{
+  display: flex;
+  padding-bottom: 30px;
+  font-size: small;
+}
+
+#listItem > li > img {
+  width: 100px;
+}
+
+table{
+  width: 100%;
+  border-collapse:separate;
+  border-spacing: 0;
+}
+
+table th:last-child{
+  border-right: 1px solid #949494;
+}
+
+table th{
+  text-align: center;
+  color:white;
+  background: linear-gradient(#bbbbbb,#8d8d8d);
+  border-left: 1px solid #979797;
+  border-top: 1px solid #949494;
+  border-bottom: 1px solid #aaaaaa;
+  box-shadow: 0px 1px 1px rgba(255,255,255,0.3) inset;
+  width: 30%;
+  padding: 5px 0;
+}
+
+table td{
+  text-align: center;
+  border-left: 1px solid #a8b7c5;
+  border-bottom: 1px solid #a8b7c5;
+  border-top:none;
+  box-shadow: 0px -3px 5px 1px #eee inset;
+  width: 70%;
+  padding: 5px 0;
+}
+
+table td:last-child{
+  border-right: 1px solid #a8b7c5;
+}
+
+/* /リストで追加 */
+
+
 @media (max-width:1020px) {
   .container_map {
     display: block;
@@ -181,4 +235,7 @@ select:hover{
     margin: 10px 5px;
   }
 
+  #listItem > li{
+    display: block;
+  }
 }

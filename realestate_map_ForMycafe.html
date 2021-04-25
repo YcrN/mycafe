@@ -66,7 +66,7 @@
 <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://villagehills.co.jp/wp-includes/wlwmanifest.xml" /> 
 <meta name="generator" content="WordPress 5.6.2" />
 <link rel="stylesheet" href="map_styles.css?v=1">
-<script src="map_data.js">
+<script src="map_data_list.js">
 	//マーカーの情報
 </script>
 </head>
@@ -277,6 +277,11 @@
 		<div>
 			<input class="mapbtn" type="button" onclick="initMap()" value="検索">
 		</div>
+
+		<!-- list -->
+		<button id="listData">listが表示されます</button>
+		<!-- /list -->
+
   </div>
 	<!-- /map side-->
 
@@ -288,6 +293,15 @@
 
 </div>
 <!-- /.l-contents -->
+
+<!-- list -->
+<div class="listarea">
+	<ul id='listItem'>
+
+	</ul>
+</div>
+<!-- /list -->
+
 
 </div>
 <!-- /#contents -->
@@ -387,6 +401,7 @@ var ASSETS_ROOT = 'https://villagehills.co.jp/wp-content/themes/villagehills/ass
 <!-- MAP scripts -->
 //マップ表示
 <script src="map_marker.js"></script>
+<script src="map_list.js"></script>
 <script
 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB0plQyW5-OAqcz1ND-GjGDEV6rhQw3H6g
 &callback=initMap&libraries=&v=weekly&language=ja&region=JP"
