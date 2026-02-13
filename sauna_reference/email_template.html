@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>予約確定メール</title>
+<style>
+  body {
+    font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    line-height: 1.8;
+    color: #333;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f7;
+  }
+  .header {
+    background-color: #86866C;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    border-radius: 8px 8px 0 0;
+  }
+  .content {
+    background-color: #fff;
+    padding: 24px;
+    border: 1px solid #e0e0d8;
+  }
+  .footer {
+    background-color: #86866C;
+    color: #fff;
+    padding: 16px;
+    text-align: center;
+    border-radius: 0 0 8px 8px;
+    font-size: 13px;
+  }
+  .footer a {
+    color: #fff;
+  }
+  .notice-box {
+    background-color: #f5f5f0;
+    border-left: 4px solid #86866C;
+    padding: 16px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .info-box {
+    background-color: #fafaf7;
+    border: 1px solid #e0e0d8;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+  }
+  .separator {
+    border: none;
+    border-top: 1px dashed #ccc;
+    margin: 20px 0;
+  }
+  .label {
+    font-weight: bold;
+    color: #86866C;
+  }
+  .announcement {
+    background-color: #fffff0;
+    border: 1px solid #e8e8c8;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1 style="margin:0; font-size:20px;">Forest Private Sauna HOKKAIDOU</h1>
+  <p style="margin:4px 0 0; font-size:14px;">ご予約確定のお知らせ</p>
+</div>
+
+<div class="content">
+  <p>{{customer_name}}様</p>
+
+  <p>ご予約ありがとうございます。<br>
+  以下の内容でご予約が確定しました。</p>
+
+  <div class="notice-box">
+    <p style="margin:0 0 8px; font-weight:bold;">以下の内容、ご承諾ありがとうございます。何卒ご協力お願い致します。</p>
+    <ul style="margin:0; padding-left:20px;">
+      <li>当施設内は電子タバコを含む全ての喫煙行為をご遠慮ください</li>
+      <li>ロウリュは20分に1回、備え付けの柄杓（ひしゃく）3杯でお願い致します。これ以上はストーブの故障原因となります</li>
+      <li>地下水は自然資源のため、蛇口から水を出したままにすると給水が止まるため節水に何卒ご協力お願い致します</li>
+      <li>当施設内では、階段や足元など滑りやすい箇所にご注意ください。また、当施設内で起きた事故に関して一切の責任を負いません</li>
+      <li>当施設への飲食物の持ち込みはご遠慮ください</li>
+      <li>サウナ室内で体調に異変を感じた場合は、速やかに利用を中止し、休憩室等で休憩してください。必要に応じて救急119番までご連絡ください</li>
+      <li>貸切制ですので、次のお客様のためにもご予約時間内でのご利用をお願い致します</li>
+    </ul>
+    <p style="margin:8px 0 0; font-size:12px;">※代表者様は上記内容に関して、同伴者様の行動に責任を持って頂きますようお願い致します</p>
+  </div>
+
+  <div class="announcement">
+    <p style="margin:0 0 8px; font-weight:bold;">～ご連絡～</p>
+    <p style="margin:0;">この度、各棟の玄関前にウッドチップを敷き詰めた外気浴スペースを施工致しました。お持ちのお気に入りチェア、インフィニティーチェアをお持ちいただきウッドチップの上に設置後、オホーツクの外気浴をお楽しみ下さいますと幸いでございます。</p>
+    <p style="margin:8px 0 0; font-size:12px;">※風、雷などの天候により設置をお断りする場合がございます事をご承諾お願い致します。</p>
+  </div>
+
+  <hr class="separator">
+
+  <div class="info-box">
+    <p><span class="label">■ 予約番号</span><br>
+    {{booking_number}}</p>
+
+    <p><span class="label">■ 予約日時</span><br>
+    {{booking_month}}月{{booking_day}}日({{booking_weekday}}) {{booking_start_time}}～{{booking_end_time}}</p>
+
+    <p><span class="label">■ 予約メニュー</span><br>
+    {{building_name}}　{{course_duration}}分コース<br>
+    ￥{{course_price}}（税込）</p>
+
+    <p><span class="label">■ オプション</span><br>
+    {{options}}</p>
+
+    <p><span class="label">■ 小計</span>　￥{{subtotal}}（税込）<br>
+    <span class="label">■ 合計</span>　￥{{total}}（税込）<br>
+    <span class="label">■ 支払方法</span>　{{payment_method}}</p>
+  </div>
+
+  <div class="info-box">
+    <p><span class="label">■ 予約確認及びキャンセル</span><br>
+    <a href="{{cancel_url}}">{{cancel_url}}</a><br>
+    <span style="font-size:13px;">キャンセル受付締切：予約日2日前の17:00まで</span></p>
+  </div>
+
+  <hr class="separator">
+
+  <p><span class="label">ご利用人数</span><br>
+  {{guest_count}}人</p>
+
+  <hr class="separator">
+
+  <p><span class="label">連絡事項</span><br>
+  {{notes}}</p>
+
+</div>
+
+<div class="footer">
+  <p style="margin:0;">北海道 北見市 端野町川向727-6</p>
+  <p style="margin:4px 0;">Forest Private Sauna HOKKAIDOU</p>
+  <p style="margin:4px 0;"><a href="https://fpsaunayoyaku.com">https://fpsaunayoyaku.com</a></p>
+  <p style="margin:4px 0;">TEL: 0157574321</p>
+</div>
+
+</body>
+</html>

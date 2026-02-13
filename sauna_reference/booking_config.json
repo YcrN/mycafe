@@ -1,0 +1,131 @@
+{
+  "facility": {
+    "name": "Forest Private Sauna HOKKAIDOU",
+    "address": "北海道 北見市 端野町川向727-6",
+    "phone": "0157574321",
+    "website": "https://fpsaunayoyaku.com",
+    "homepage": "https://forestprivatesaunahokkaidou.com/",
+    "main_color": "#86866C"
+  },
+
+  "buildings": [
+    {
+      "name": "瞑想棟",
+      "bookly_staff_id": 3,
+      "operating_hours": {
+        "60min": { "start": "10:00", "end": "11:00" },
+        "90min": { "start": "12:00", "end": "22:00" },
+        "120min": { "start": "12:00", "end": "22:00" }
+      }
+    },
+    {
+      "name": "座禅棟",
+      "bookly_staff_id": 2,
+      "operating_hours": {
+        "60min": { "start": "11:00", "end": "12:00" },
+        "90min": { "start": "12:00", "end": "22:00" },
+        "120min": { "start": "12:00", "end": "22:00" }
+      }
+    },
+    {
+      "name": "翠嵐棟",
+      "bookly_staff_id": 4,
+      "operating_hours": {
+        "60min": { "start": "10:00", "end": "11:00" },
+        "90min": { "start": "12:00", "end": "20:00" },
+        "120min": { "start": "12:00", "end": "22:00" }
+      }
+    }
+  ],
+
+  "booking_rules": {
+    "buffer_before_minutes": 60,
+    "buffer_after_minutes": 60,
+    "buffer_before_reason": "サウナ温度を上げるため",
+    "buffer_after_reason": "掃除等"
+  },
+
+  "courses": [
+    { "duration_minutes": 60, "label": "60分コース" },
+    { "duration_minutes": 90, "label": "90分コース" },
+    { "duration_minutes": 120, "label": "120分コース" }
+  ],
+
+  "services": {
+    "bookly_service_ids": {
+      "60min_weekday": 1,
+      "60min_weekend_holiday": 2,
+      "90min_weekday": 3,
+      "90min_weekend_holiday": 4,
+      "120min_weekday": 5,
+      "120min_weekend_holiday": 6
+    }
+  },
+
+  "pricing": {
+    "currency": "JPY",
+    "tax_included": true,
+    "general_member": {
+      "60min": { "weekday": 6600, "weekend_holiday": 7700 },
+      "90min": { "weekday": 9900, "weekend_holiday": 11100 },
+      "120min": { "weekday": 12100, "weekend_holiday": 13200 }
+    },
+    "vip_member": {
+      "60min": { "ticket": 1, "price": 550 },
+      "90min": { "ticket": 1, "price": 820 },
+      "120min": { "ticket": 1, "price": 1100 }
+    },
+    "weekday_days": ["月", "火", "水", "木", "金"],
+    "weekend_holiday_days": ["土", "日", "祝"]
+  },
+
+  "options": [
+    { "name": "タオルセット", "price": 500 },
+    { "name": "オロポ（グラス・氷付き）", "price": 480 },
+    { "name": "ミネラルウォーター", "price": 130 },
+    { "name": "ポカリスエット", "price": 250 }
+  ],
+
+  "membership": {
+    "vip": {
+      "enrollment_fee": 22000,
+      "monthly_fee": 55000,
+      "monthly_benefits": {
+        "tickets_per_month": 6,
+        "ticket_type": "120分回数券",
+        "free_water": true,
+        "free_rental_towel": true
+      }
+    }
+  },
+
+  "cancellation_policy": [
+    {
+      "condition": "ご利用日の2日前の17:00まで",
+      "charge_percent": 0,
+      "refund_description": "キャンセル料は無料（全額返金）"
+    },
+    {
+      "condition": "ご利用日の1日前の12:00まで",
+      "charge_percent": 50,
+      "refund_description": "キャンセル料は50%（半額返金）"
+    },
+    {
+      "condition": "ご利用日の1日前の12:01以降",
+      "charge_percent": 100,
+      "refund_description": "キャンセル料は100%（返金なし）"
+    }
+  ],
+
+  "notifications": {
+    "channels": ["email", "LINE"],
+    "triggers": ["予約確定", "キャンセル", "前日リマインド"],
+    "google_calendar_sync": true
+  },
+
+  "coupons": {
+    "enabled": true,
+    "distribution": "不定期",
+    "description": "不定期で割引クーポンを発行。クーポン所持者に割引を適用"
+  }
+}
