@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FPS予約サイト UIイメージ（プラン対応版）</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans JP', 'Yu Gothic', 'Hiragino Sans', -apple-system, sans-serif; background: #fafaf8; color: #111827; -webkit-font-smoothing: antialiased; }
+  button { font-family: inherit; }
+
+  /* ── Watermark Banner ── */
+  .demo-banner {
+    position: sticky; top: 0; z-index: 9999;
+    background: linear-gradient(90deg, #2D3320, #86866C);
+    color: #fff; text-align: center; padding: 10px 16px;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .demo-banner span { opacity: 0.7; font-weight: 400; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="demo-banner">
+  📋 予約サイト UIデザインイメージ <span>｜ 実際に操作してご確認いただけます</span>
+</div>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const BUILDINGS = [
+  { key: "M", name: "瞑想棟", sub: "静寂の中でととのう", img: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&q=80" },
+  { key: "Z", name: "座禅棟", sub: "心を無にする空間", img: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600&q=80" },
+  { key: "S", name: "翠嵐棟", sub: "自然を感じる贅沢", img: "https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=600&q=80" },
+];
+
+const PLANS = [
+  { id: "solo", name: "ひとり癒しプラン", time: "60分", price: "¥4,400", tag: "初心者おすすめ", color: "#86866C", desc: "タオルセット＋ドリンク1本付き。サウナ初めてでも安心の60分コース。", icon: "🧘", persons: "1名" },
+  { id: "pair", name: "ふたりで整うプラン", time: "90分", price: "¥7,700", tag: "カップルに人気", color: "#6B7B5E", desc: "タオル2セット＋ドリンク2本付き。二人で贅沢なととのい体験。", icon: "👫", persons: "2名" },
+  { id: "premium", name: "オホーツク満喫プラン", time: "120分", price: "¥11,000", tag: "プレミアム", color: "#4A5043", desc: "タオル＋全ドリンク＋オロポ付き。北海道の大自然で最高のととのい。", icon: "✨", persons: "1〜2名" },
+  { id: "first", name: "初回体験プラン", time: "60分", price: "¥3,300", tag: "初回限定", color: "#B8860B", desc: "初めてのお客様限定の特別価格。まずはお試しください。", icon: "🎁", persons: "1名" },
+  { id: "group", name: "グループ贅沢プラン", time: "120分", price: "¥8,800/人", tag: "3〜4名", color: "#5C6B77", desc: "仲間と一緒にプライベート空間で。チームビルディングにも。", icon: "👥", persons: "3〜4名" },
+  { id: "custom", name: "時間で選ぶ（従来方式）", time: "", price: "", tag: "自由選択", color: "#888", desc: "60分/90分/120分からお好みの時間を選んで予約", icon: "⏱️", persons: "" },
+];
+
+const COURSES = ["60分", "90分", "120分"];
+const WEEK_DAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+function getWeekDates(offset) {
+  const d = new Date(); d.setDate(d.getDate() + offset * 7);
+  const day = d.getDay(); const mon = new Date(d); mon.setDate(d.getDate() - ((day + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => { const dt = new Date(mon); dt.setDate(mon.getDate() + i); return dt; });
+}
+
+function HeroBanner() {
+  return (
+    <div style={{ position: "relative", overflow: "hidden", borderRadius: 20, background: "linear-gradient(135deg, #2D3320 0%, #4A5043 40%, #86866C 100%)", padding: "44px 28px 36px", marginBottom: 28, color: "#fff" }}>
+      <div style={{ position: "absolute", top: -60, right: -40, width: 260, height: 260, borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
+      <div style={{ position: "absolute", bottom: -30, left: -20, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <p style={{ fontSize: 12, letterSpacing: 3, textTransform: "uppercase", opacity: 0.6, margin: "0 0 8px", fontWeight: 500 }}>Forest Private Sauna HOKKAIDOU</p>
+        <h1 style={{ fontSize: "clamp(24px, 5vw, 36px)", fontWeight: 900, margin: "0 0 10px", lineHeight: 1.2, letterSpacing: -0.5 }}>オホーツクの大自然で<br/>最高の「ととのい」を</h1>
+        <p style={{ fontSize: 14, opacity: 0.75, margin: "0 0 16px", maxWidth: 400, lineHeight: 1.6 }}>完全プライベート空間で、あなただけのサウナ体験を。<br/>3棟の貸切サウナからお選びいただけます。</p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {["🎁 初回体験 ¥3,300〜", "🏠 完全貸切制", "🌲 北見市端野町"].map(t => (
+            <span key={t} style={{ background: "rgba(255,255,255,0.14)", padding: "5px 12px", borderRadius: 99, fontSize: 12, fontWeight: 600 }}>{t}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlanCard({ plan, selected, onSelect }) {
+  const isCustom = plan.id === "custom";
+  const active = selected === plan.id;
+  return (
+    <button onClick={() => onSelect(plan.id)} style={{ position: "relative", textAlign: "left", cursor: "pointer", width: "100%", border: active ? `2px solid ${plan.color}` : "1px solid #e5e7eb", borderRadius: 16, padding: isCustom ? "14px 16px" : "18px 16px 14px", background: active ? `${plan.color}0D` : "#fff", boxShadow: active ? `0 6px 20px ${plan.color}22` : "0 1px 4px rgba(0,0,0,0.04)", transition: "all 0.2s", outline: "none", transform: active ? "translateY(-2px)" : "none" }}>
+      {plan.tag && <span style={{ position: "absolute", top: -9, right: 14, background: plan.color, color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99 }}>{plan.tag}</span>}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <span style={{ fontSize: 26, lineHeight: 1 }}>{plan.icon}</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 800, fontSize: 15, color: "#111", marginBottom: 2 }}>{plan.name}</div>
+          {!isCustom ? (
+            <>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 3 }}>
+                <span style={{ fontWeight: 900, fontSize: 20, color: plan.color }}>{plan.price}</span>
+                <span style={{ fontSize: 11, color: "#888" }}>{plan.time} / {plan.persons}</span>
+              </div>
+              <p style={{ fontSize: 11, color: "#666", margin: 0, lineHeight: 1.5 }}>{plan.desc}</p>
+            </>
+          ) : (
+            <p style={{ fontSize: 12, color: "#666", margin: "3px 0 0" }}>60分/90分/120分から自由に選択（現在の予約方式と同じ）</p>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function BuildingCard({ bld, selected, onSelect }) {
+  const active = selected === bld.key;
+  return (
+    <button onClick={() => onSelect(bld.key)} style={{ position: "relative", display: "block", width: "100%", aspectRatio: "3/2", borderRadius: 14, overflow: "hidden", border: "none", cursor: "pointer", backgroundImage: `url(${bld.img})`, backgroundSize: "cover", backgroundPosition: "center", boxShadow: active ? "0 10px 28px rgba(0,0,0,0.18)" : "0 3px 12px rgba(0,0,0,0.07)", outline: active ? "3px solid #111827" : "none", outlineOffset: active ? 2 : 0, transition: "all 0.22s", transform: active ? "translateY(-3px)" : "none" }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.42) 100%)" }} />
+      <div style={{ position: "absolute", bottom: 8, left: 10, right: 10, color: "#fff", zIndex: 1 }}>
+        <div style={{ fontWeight: 800, fontSize: "clamp(14px, 3vw, 17px)", textShadow: "0 2px 6px rgba(0,0,0,0.35)", lineHeight: 1.3 }}>{bld.name}</div>
+        <div style={{ fontSize: "clamp(10px, 2.2vw, 12px)", opacity: 0.9 }}>{bld.sub}</div>
+      </div>
+      {active && <div style={{ position: "absolute", top: 6, right: 6, width: 24, height: 24, borderRadius: "50%", background: "#111827", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, fontWeight: 700 }}>✓</div>}
+    </button>
+  );
+}
+
+function WeekGrid({ weekDates, course }) {
+  const hours = course === "60分" ? [10, 11] : [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+  const [avail] = useState(() => {
+    const m = {};
+    hours.forEach(h => Array.from({ length: 7 }, (_, i) => { m[`${h}-${i}`] = Math.random() < 0.25 ? "x" : Math.random() < 0.12 ? "-" : "o"; }));
+    return m;
+  });
+  return (
+    <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "52px repeat(7, minmax(0,1fr))", background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
+        <div style={{ padding: "7px 2px" }} />
+        {weekDates.map((d, i) => {
+          const dow = d.getDay(); const clr = dow === 0 ? "#b91c1c" : dow === 6 ? "#1d4ed8" : "#111";
+          return (<div key={i} style={{ padding: "7px 2px", textAlign: "center", borderLeft: "1px solid #e5e7eb" }}><div style={{ fontWeight: 800, fontSize: "clamp(13px, 2.6vw, 16px)", color: clr }}>{d.getDate()}</div><div style={{ fontSize: "clamp(10px, 2vw, 12px)", color: clr }}>{WEEK_DAYS[dow]}</div></div>);
+        })}
+      </div>
+      {hours.map(h => (
+        <div key={h} style={{ display: "grid", gridTemplateColumns: "52px repeat(7, minmax(0,1fr))", borderTop: "1px solid #e5e7eb" }}>
+          <div style={{ padding: "5px 2px", fontSize: "clamp(11px, 2.2vw, 14px)", color: "#6b7280", display: "flex", alignItems: "center", justifyContent: "center" }}>{h}:00</div>
+          {weekDates.map((_, di) => {
+            const s = avail[`${h}-${di}`];
+            return (
+              <div key={di} style={{ borderLeft: "1px solid #e5e7eb", minHeight: 32, background: s === "o" ? "#fff" : "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {s === "o" && <button style={{ width: "100%", height: "100%", border: "none", background: "transparent", cursor: "pointer", fontSize: 14, color: "#86866C", fontWeight: 700, borderRadius: 6 }} onMouseOver={e => e.target.style.background = "#86866C15"} onMouseOut={e => e.target.style.background = "transparent"}>◎</button>}
+                {s === "x" && <span style={{ fontSize: 11, color: "#ccc" }}>✕</span>}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Label({ children }) {
+  return <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111", margin: "24px 0 8px" }}>{children}</h2>;
+}
+
+function App() {
+  const [plan, setPlan] = useState(null);
+  const [building, setBuilding] = useState(null);
+  const [course, setCourse] = useState(null);
+  const [weekOff, setWeekOff] = useState(0);
+  const gridRef = useRef(null);
+
+  const sp = PLANS.find(p => p.id === plan);
+  const isCustom = plan === "custom";
+  const showGrid = building && (isCustom ? course : plan);
+  const effCourse = isCustom ? course : sp?.time || null;
+
+  useEffect(() => { if (!isCustom && sp?.time) setCourse(sp.time); }, [plan]);
+
+  const wd = getWeekDates(weekOff);
+  const ml = `${wd[0].getFullYear()}年${wd[0].getMonth() + 1}月`;
+
+  return (
+    <div style={{ maxWidth: 600, margin: "0 auto", padding: "16px 14px 60px" }}>
+      <HeroBanner />
+
+      <Label>① プランを選択</Label>
+      <div style={{ display: "grid", gap: 12 }}>
+        {PLANS.map(p => <PlanCard key={p.id} plan={p} selected={plan} onSelect={id => { setPlan(id); if (id !== "custom") setCourse(null); }} />)}
+      </div>
+
+      {isCustom && (
+        <>
+          <Label>コースを選択</Label>
+          <div style={{ display: "flex", gap: 8 }}>
+            {COURSES.map(c => (
+              <button key={c} onClick={() => setCourse(c)} style={{ flex: "1 1 0", minHeight: 50, border: "1px solid #e5e7eb", borderRadius: 12, cursor: "pointer", background: course === c ? "#86866C" : "#fff", color: course === c ? "#fff" : "#111", fontWeight: 800, fontSize: "clamp(14px, 3vw, 18px)", transition: "all 0.15s" }}>{c}</button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {plan && (
+        <>
+          <Label>② 棟を選択</Label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+            {BUILDINGS.map(b => <BuildingCard key={b.key} bld={b} selected={building} onSelect={k => { setBuilding(k); setTimeout(() => gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120); }} />)}
+          </div>
+        </>
+      )}
+
+      {showGrid && (
+        <div ref={gridRef}>
+          <Label>③ 日時を選択</Label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+            {sp && !isCustom && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 99, background: `${sp.color}12`, border: `1px solid ${sp.color}30`, fontSize: 13, fontWeight: 700 }}>
+                {sp.icon} {sp.name}
+                <span style={{ color: "#888", fontSize: 11, background: "#fff", padding: "1px 5px", borderRadius: 99, border: "1px solid #e5e7eb", marginLeft: 3 }}>{sp.time}</span>
+              </span>
+            )}
+            {isCustom && course && <span style={{ padding: "5px 10px", borderRadius: 99, background: "#f1f5f9", border: "1px solid #e2e8f0", fontSize: 13, fontWeight: 700 }}>⏱️ {course}コース</span>}
+            <span style={{ padding: "5px 10px", borderRadius: 99, background: "#f1f5f9", border: "1px solid #e2e8f0", fontSize: 13, fontWeight: 700 }}>🏠 {BUILDINGS.find(b => b.key === building)?.name}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: 6 }}>
+            <button onClick={() => setWeekOff(w => w - 1)} style={{ padding: "5px 12px", border: "1px solid #e5e7eb", borderRadius: 10, background: "#f9fafb", cursor: "pointer", fontSize: 15, fontWeight: 600 }}>‹ 前週</button>
+            <span style={{ fontWeight: 700, fontSize: 16 }}>{ml}</span>
+            <button onClick={() => setWeekOff(w => w + 1)} style={{ padding: "5px 12px", border: "1px solid #e5e7eb", borderRadius: 10, background: "#f9fafb", cursor: "pointer", fontSize: 15, fontWeight: 600 }}>次週 ›</button>
+          </div>
+          <WeekGrid weekDates={wd} course={effCourse} />
+          <p style={{ fontSize: 11, color: "#999", marginTop: 6, textAlign: "center" }}>◎ 予約可能 ／ ✕ 予約済み ／ グレー 予約不可</p>
+        </div>
+      )}
+
+      <div style={{ marginTop: 36, padding: "20px 18px", borderRadius: 16, background: "#fff", border: "1px solid #e5e7eb", boxShadow: "0 1px 4px rgba(0,0,0,0.03)" }}>
+        <h3 style={{ fontSize: 15, fontWeight: 800, margin: "0 0 10px", color: "#86866C" }}>📍 施設情報</h3>
+        <div style={{ fontSize: 13, color: "#555", lineHeight: 1.8 }}>
+          <div><strong>Forest Private Sauna HOKKAIDOU</strong></div>
+          <div>北海道 北見市 端野町川向727-6</div>
+          <div>TEL: 0157-57-4321</div>
+          <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {["🅿️ 駐車場あり", "🔒 完全貸切", "🌿 外気浴スペース"].map(t => (
+              <span key={t} style={{ background: "#f5f5f0", padding: "3px 8px", borderRadius: 8, fontSize: 11, fontWeight: 600 }}>{t}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 24, padding: "16px 18px", borderRadius: 12, background: "#f5f5f0", border: "1px dashed #ccc", textAlign: "center" }}>
+        <p style={{ fontSize: 12, color: "#888", margin: 0 }}>※ これはデザインイメージです。実際の予約データは反映されていません。</p>
+        <p style={{ fontSize: 12, color: "#888", margin: "4px 0 0" }}>プラン名・価格・内容は変更可能です。ご要望をお聞かせください。</p>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
