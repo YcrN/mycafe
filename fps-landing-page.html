@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forest Private Sauna HOKKAIDOU｜北見唯一の完全貸切プライベートサウナ</title>
+<meta name="description" content="北海道オホーツク・北見市にある完全貸切プライベートサウナ。道東初のHARVIA Spirit9ストーブ、天然地下水の水風呂、3棟から選べる個性豊かな空間。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --olive: #86866C;
+  --olive-light: #A8A890;
+  --olive-dark: #5C5C4A;
+  --terra: #C4956A;
+  --terra-light: #D4AD88;
+  --terra-glow: #d4a574;
+  --cream: #FAF8F5;
+  --warm-white: #F5F3EF;
+  --dark: #1a1a17;
+  --darker: #111110;
+  --text: #3a3a32;
+  --text-light: #7a7a6a;
+  --gold: #c9a96e;
+  --gold-light: #e8d5a8;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; font-size:16px; }
+body {
+  font-family:'Noto Sans JP', sans-serif; color:var(--text);
+  background:var(--cream); line-height:1.8; overflow-x:hidden;
+}
+
+/* ===== STICKY NAV ===== */
+.nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1rem 2rem;
+  background:transparent;
+  transition:all 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+.nav.scrolled {
+  background:rgba(26,26,23,0.92);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  padding:0.7rem 2rem;
+  box-shadow:0 4px 30px rgba(0,0,0,0.15);
+}
+.nav-logo {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1.1rem; color:var(--gold-light);
+  letter-spacing:0.15em; font-weight:600;
+  text-decoration:none;
+  opacity:0; transform:translateY(-10px);
+  transition:opacity 0.4s, transform 0.4s;
+}
+.nav.scrolled .nav-logo { opacity:1; transform:translateY(0); }
+.nav-cta {
+  display:inline-block; padding:0.5rem 1.5rem;
+  background:var(--terra); color:#fff; text-decoration:none;
+  font-size:0.8rem; font-weight:500; letter-spacing:0.12em;
+  border-radius:50px; transition:all 0.3s ease;
+  opacity:0; transform:translateY(-10px);
+}
+.nav.scrolled .nav-cta { opacity:1; transform:translateY(0); }
+.nav-cta:hover { background:var(--terra-light); transform:translateY(-1px) scale(1.02); box-shadow:0 4px 15px rgba(196,149,106,0.4); }
+
+/* ===== HERO ===== */
+.hero {
+  position:relative; min-height:100svh; display:flex; align-items:center; justify-content:center;
+  background:var(--dark); overflow:hidden;
+}
+@media (max-width:640px) {
+  .hero { min-height:100svh; }
+}
+.hero-bg {
+  position:absolute; inset:0;
+  background:linear-gradient(135deg, #2a2a20 0%, #1a1a17 50%, #0d0d0a 100%);
+  /* ★ ヒーロー写真差し替え: background-image: url('hero.jpg'); background-size:cover; background-position:center; */
+}
+.hero-bg::after { content:''; position:absolute; inset:0; background:rgba(0,0,0,0.45); }
+
+/* Hero ambient glow */
+.hero-glow {
+  position:absolute; width:600px; height:600px; border-radius:50%;
+  background:radial-gradient(circle, rgba(196,149,106,0.15) 0%, transparent 70%);
+  top:50%; left:50%; transform:translate(-50%,-50%);
+  animation:heroGlow 8s ease-in-out infinite;
+  z-index:1;
+}
+@keyframes heroGlow {
+  0%, 100% { opacity:0.5; transform:translate(-50%,-50%) scale(1); }
+  50% { opacity:1; transform:translate(-50%,-50%) scale(1.3); }
+}
+
+/* Floating particles */
+.particles {
+  position:absolute; inset:0; z-index:1; overflow:hidden;
+}
+.particle {
+  position:absolute; width:2px; height:2px; background:rgba(201,169,110,0.4);
+  border-radius:50%; animation:float linear infinite;
+}
+@keyframes float {
+  0% { transform:translateY(100vh) scale(0); opacity:0; }
+  10% { opacity:1; }
+  90% { opacity:1; }
+  100% { transform:translateY(-10vh) scale(1); opacity:0; }
+}
+
+.hero-content {
+  position:relative; z-index:2; text-align:center;
+  padding:2rem; max-width:850px;
+}
+.hero-sub {
+  font-family:'Cormorant Garamond', serif;
+  font-size:clamp(0.9rem, 2.5vw, 1.2rem);
+  color:var(--gold-light); letter-spacing:0.4em;
+  margin-bottom:1.2rem;
+  opacity:0; animation:heroFadeUp 1s ease 0.3s forwards;
+}
+.hero-title {
+  font-size:clamp(1.8rem, 5vw, 3.2rem);
+  font-weight:900; color:#fff;
+  letter-spacing:0.08em; line-height:1.45;
+  margin-bottom:0.8rem;
+  opacity:0; animation:heroFadeUp 1s ease 0.6s forwards;
+}
+.hero-title span {
+  display:inline-block; position:relative;
+}
+.hero-title .accent {
+  color:var(--terra-light);
+}
+.hero-tagline {
+  font-size:clamp(0.85rem, 2vw, 1.05rem);
+  color:rgba(255,255,255,0.65); font-weight:300;
+  margin-bottom:2.5rem; letter-spacing:0.04em;
+  opacity:0; animation:heroFadeUp 1s ease 0.9s forwards;
+}
+.hero-cta-wrap {
+  opacity:0; animation:heroFadeUp 1s ease 1.2s forwards;
+}
+.hero-cta {
+  display:inline-flex; align-items:center; gap:0.6rem;
+  padding:1.1rem 3rem;
+  background:linear-gradient(135deg, var(--terra) 0%, var(--terra-light) 100%);
+  color:#fff; text-decoration:none;
+  font-size:1.05rem; font-weight:500; letter-spacing:0.15em;
+  border-radius:50px; transition:all 0.4s cubic-bezier(0.16,1,0.3,1);
+  box-shadow:0 4px 25px rgba(196,149,106,0.35);
+  position:relative; overflow:hidden;
+}
+.hero-cta::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+  opacity:0; transition:opacity 0.3s;
+}
+.hero-cta:hover {
+  transform:translateY(-3px) scale(1.03);
+  box-shadow:0 8px 40px rgba(196,149,106,0.5);
+}
+.hero-cta:hover::before { opacity:1; }
+.hero-cta-arrow {
+  display:inline-block; transition:transform 0.3s;
+}
+.hero-cta:hover .hero-cta-arrow { transform:translateX(4px); }
+
+@keyframes heroFadeUp {
+  from { opacity:0; transform:translateY(25px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* Hero scroll indicator */
+.scroll-indicator {
+  position:absolute; bottom:2rem; left:50%; transform:translateX(-50%);
+  z-index:2; display:flex; flex-direction:column; align-items:center; gap:0.5rem;
+  opacity:0; animation:heroFadeUp 1s ease 1.5s forwards;
+}
+.scroll-indicator span {
+  font-size:0.65rem; color:rgba(255,255,255,0.3);
+  letter-spacing:0.2em; text-transform:uppercase;
+}
+.scroll-line {
+  width:1px; height:40px; background:linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+  animation:scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse {
+  0%, 100% { opacity:0.3; transform:scaleY(1); }
+  50% { opacity:1; transform:scaleY(1.2); }
+}
+
+/* ===== SECTION COMMON ===== */
+.section { padding:6rem 2rem; max-width:1100px; margin:0 auto; }
+.section-dark { background:var(--dark); color:#fff; padding:6rem 2rem; }
+.section-dark .section-inner { max-width:1100px; margin:0 auto; }
+.section-accent { background:linear-gradient(135deg, var(--warm-white) 0%, #f0ede6 100%); padding:6rem 2rem; }
+.section-accent .section-inner { max-width:1100px; margin:0 auto; }
+.section-label {
+  font-family:'Cormorant Garamond', serif;
+  font-size:0.85rem; color:var(--gold);
+  letter-spacing:0.35em; text-transform:uppercase; margin-bottom:0.5rem;
+}
+.section-heading {
+  font-size:clamp(1.5rem, 3.5vw, 2.2rem);
+  font-weight:700; letter-spacing:0.05em;
+  margin-bottom:1rem; line-height:1.4;
+}
+.section-heading-desc {
+  font-size:0.9rem; color:var(--text-light); margin-bottom:2.5rem;
+  max-width:600px;
+}
+.section-dark .section-heading { color:#fff; }
+.section-dark .section-heading-desc { color:rgba(255,255,255,0.5); }
+
+/* Horizontal line decoration */
+.heading-line {
+  width:40px; height:2px;
+  background:linear-gradient(to right, var(--gold), transparent);
+  margin-bottom:1rem;
+}
+.section-dark .heading-line { background:linear-gradient(to right, var(--gold-light), transparent); }
+
+/* ===== FADE/SLIDE ANIMATIONS ===== */
+.reveal { opacity:0; transform:translateY(40px); transition:all 0.9s cubic-bezier(0.16,1,0.3,1); }
+.reveal.visible { opacity:1; transform:translateY(0); }
+.reveal-left { opacity:0; transform:translateX(-40px); transition:all 0.9s cubic-bezier(0.16,1,0.3,1); }
+.reveal-left.visible { opacity:1; transform:translateX(0); }
+.reveal-right { opacity:0; transform:translateX(40px); transition:all 0.9s cubic-bezier(0.16,1,0.3,1); }
+.reveal-right.visible { opacity:1; transform:translateX(0); }
+.reveal-scale { opacity:0; transform:scale(0.9); transition:all 0.9s cubic-bezier(0.16,1,0.3,1); }
+.reveal-scale.visible { opacity:1; transform:scale(1); }
+
+/* Stagger children */
+.stagger-children .reveal:nth-child(1) { transition-delay:0s; }
+.stagger-children .reveal:nth-child(2) { transition-delay:0.15s; }
+.stagger-children .reveal:nth-child(3) { transition-delay:0.3s; }
+.stagger-children .reveal:nth-child(4) { transition-delay:0.45s; }
+
+/* ===== FEATURES ===== */
+.features-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:2rem; margin-top:2.5rem; }
+@media (max-width:768px) { .features-grid { grid-template-columns:1fr; } }
+.feature-card {
+  text-align:center; padding:2.5rem 2rem; border-radius:16px;
+  background:#fff; border:1px solid rgba(134,134,108,0.08);
+  transition:all 0.5s cubic-bezier(0.16,1,0.3,1);
+  position:relative; overflow:hidden;
+}
+.feature-card::before {
+  content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:60px; height:3px; background:linear-gradient(to right, var(--gold), var(--terra-light));
+  border-radius:0 0 3px 3px; opacity:0; transition:all 0.4s ease;
+}
+.feature-card:hover {
+  transform:translateY(-8px);
+  box-shadow:0 20px 60px rgba(134,134,108,0.12);
+}
+.feature-card:hover::before { opacity:1; width:80px; }
+.feature-icon-wrap {
+  width:64px; height:64px; margin:0 auto 1.2rem;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, rgba(201,169,110,0.1), rgba(196,149,106,0.05));
+  border-radius:16px; font-size:1.8rem;
+  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+.feature-card:hover .feature-icon-wrap { transform:scale(1.1) rotate(-3deg); }
+.feature-title { font-size:1.1rem; font-weight:700; margin-bottom:0.8rem; color:var(--olive-dark); }
+.feature-text { font-size:0.88rem; color:var(--text-light); line-height:1.9; }
+
+/* ===== NUMBER STATS ===== */
+.stats-bar {
+  display:grid; grid-template-columns:repeat(3, 1fr);
+  gap:0; margin-top:3rem;
+  background:#fff; border-radius:16px; overflow:hidden;
+  box-shadow:0 4px 30px rgba(134,134,108,0.08);
+  border:1px solid rgba(134,134,108,0.06);
+}
+.stat-item {
+  text-align:center; padding:2rem 1.5rem;
+  position:relative;
+}
+.stat-item:not(:last-child)::after {
+  content:''; position:absolute; right:0; top:20%; height:60%;
+  width:1px; background:rgba(134,134,108,0.1);
+}
+.stat-number {
+  font-family:'Cormorant Garamond', serif;
+  font-size:clamp(2rem, 4vw, 2.8rem); font-weight:700;
+  color:var(--terra);
+  line-height:1.2;
+}
+.stat-label { font-size:0.75rem; color:var(--text-light); margin-top:0.3rem; letter-spacing:0.08em; }
+@media (max-width:640px) {
+  .stats-bar { grid-template-columns:1fr; }
+  .stat-item:not(:last-child)::after { width:60%; height:1px; right:20%; top:auto; bottom:0; }
+}
+
+/* ===== BUILDINGS ===== */
+.building { margin-bottom:5rem; }
+.building:last-child { margin-bottom:0; }
+.building-header {
+  display:flex; align-items:baseline; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;
+}
+.building-name {
+  font-size:1.6rem; font-weight:700; color:var(--olive-dark);
+  position:relative;
+}
+.building-name::after {
+  content:''; position:absolute; bottom:-4px; left:0;
+  width:0; height:2px; background:var(--gold);
+  transition:width 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.building.visible .building-name::after { width:100%; }
+.building-name-en {
+  font-family:'Cormorant Garamond', serif;
+  font-size:1rem; color:var(--gold); letter-spacing:0.15em;
+}
+.building-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+.building-grid.reverse > *:first-child { grid-column:2; grid-row:1; }
+.building-grid.reverse > *:last-child { grid-column:1; grid-row:1; }
+.building-photo, .building-floorplan {
+  background:var(--warm-white); border-radius:12px; overflow:hidden;
+  aspect-ratio:4/3; display:flex; align-items:center; justify-content:center;
+  border:1px solid rgba(134,134,108,0.1);
+  transition:all 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+.building-photo:hover, .building-floorplan:hover {
+  transform:scale(1.02); box-shadow:0 12px 40px rgba(0,0,0,0.08);
+}
+.building-photo img, .building-floorplan img { width:100%; height:100%; object-fit:cover; }
+.placeholder-label { color:var(--text-light); font-size:0.85rem; text-align:center; padding:1rem; }
+.building-desc {
+  margin-top:1.5rem; font-size:0.93rem; color:var(--text-light); line-height:2;
+}
+@media (max-width:640px) {
+  .building-grid { grid-template-columns:1fr; }
+  .building-grid.reverse > *:first-child { grid-column:auto; grid-row:auto; }
+  .building-grid.reverse > *:last-child { grid-column:auto; grid-row:auto; }
+}
+
+/* ===== PRICING ===== */
+.pricing-table { width:100%; border-collapse:collapse; margin-top:2rem; }
+.pricing-table th, .pricing-table td {
+  padding:1.2rem 1.5rem; text-align:center;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.pricing-table thead th {
+  font-size:0.8rem; color:var(--gold-light);
+  letter-spacing:0.15em; font-weight:400;
+  border-bottom:1px solid rgba(255,255,255,0.15);
+}
+.pricing-table tbody tr {
+  transition:background 0.3s ease;
+}
+.pricing-table tbody tr:hover {
+  background:rgba(255,255,255,0.03);
+}
+.pricing-table .course-name { font-weight:700; font-size:1.1rem; text-align:left; color:#fff; white-space:nowrap; }
+.pricing-table .price { font-size:1.05rem; color:rgba(255,255,255,0.9); white-space:nowrap; }
+.pricing-table .price-highlight {
+  color:var(--gold-light); font-weight:600;
+}
+.pricing-note { margin-top:1.5rem; font-size:0.8rem; color:rgba(255,255,255,0.5); }
+@media (max-width:520px) {
+  .pricing-table { display:none; }
+  .pricing-cards { display:flex; flex-direction:column; gap:1rem; margin-top:2rem; }
+  .pricing-card {
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px; padding:1.5rem;
+    transition:all 0.3s ease;
+  }
+  .pricing-card:hover { background:rgba(255,255,255,0.07); }
+  .pricing-card-name { font-weight:700; font-size:1.1rem; color:#fff; margin-bottom:0.8rem; }
+  .pricing-card-row { display:flex; justify-content:space-between; padding:0.4rem 0; }
+  .pricing-card-label { color:var(--gold-light); font-size:0.8rem; letter-spacing:0.1em; }
+  .pricing-card-price { color:rgba(255,255,255,0.9); font-size:1rem; font-weight:500; }
+}
+@media (min-width:521px) {
+  .pricing-cards { display:none; }
+}
+
+.option-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.8rem; margin-top:1.5rem; }
+.option-item {
+  display:flex; justify-content:space-between; padding:0.8rem 1.2rem;
+  background:rgba(255,255,255,0.04); border-radius:8px;
+  border:1px solid rgba(255,255,255,0.06);
+  transition:all 0.3s ease;
+}
+.option-item:hover { background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.12); }
+.option-name { color:rgba(255,255,255,0.7); font-size:0.88rem; }
+.option-price { color:var(--gold-light); font-weight:500; font-size:0.88rem; }
+
+/* ===== SEASONS ===== */
+.seasons-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:1.5rem; margin-top:2.5rem; }
+@media (max-width:768px) { .seasons-grid { grid-template-columns:repeat(2, 1fr); } }
+@media (max-width:480px) { .seasons-grid { grid-template-columns:1fr; } }
+.season-card {
+  background:#fff; border-radius:16px; padding:2rem 1.5rem; text-align:center;
+  box-shadow:0 2px 20px rgba(0,0,0,0.03);
+  border:1px solid rgba(134,134,108,0.06);
+  transition:all 0.5s cubic-bezier(0.16,1,0.3,1);
+  position:relative; overflow:hidden;
+}
+.season-card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0;
+  height:3px; opacity:0; transition:opacity 0.4s;
+}
+.season-card:nth-child(1)::after { background:linear-gradient(to right, #f7cac9, #f0b3b0); }
+.season-card:nth-child(2)::after { background:linear-gradient(to right, #87ceeb, #5bb5d5); }
+.season-card:nth-child(3)::after { background:linear-gradient(to right, #daa520, #cd853f); }
+.season-card:nth-child(4)::after { background:linear-gradient(to right, #b0c4de, #87ceeb); }
+.season-card:hover {
+  transform:translateY(-6px);
+  box-shadow:0 16px 50px rgba(0,0,0,0.07);
+}
+.season-card:hover::after { opacity:1; }
+.season-icon { font-size:2.2rem; margin-bottom:0.8rem; }
+.season-name { font-weight:700; font-size:1rem; margin-bottom:0.5rem; color:var(--olive-dark); }
+.season-text { font-size:0.83rem; color:var(--text-light); line-height:1.8; }
+
+/* ===== TESTIMONIALS ===== */
+.testimonials-grid {
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:2rem; margin-top:2.5rem;
+}
+@media (max-width:768px) { .testimonials-grid { grid-template-columns:1fr; } }
+.testimonial-card {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:16px; padding:2rem;
+  transition:all 0.4s ease;
+  position:relative;
+}
+.testimonial-card:hover { background:rgba(255,255,255,0.06); transform:translateY(-4px); }
+.testimonial-stars { color:var(--gold); font-size:0.9rem; margin-bottom:0.8rem; letter-spacing:0.1em; }
+.testimonial-text { font-size:0.88rem; color:rgba(255,255,255,0.7); line-height:1.9; margin-bottom:1.2rem; }
+.testimonial-author { font-size:0.75rem; color:var(--gold-light); letter-spacing:0.08em; }
+.testimonial-badge {
+  display:inline-block; padding:0.2rem 0.6rem; background:rgba(201,169,110,0.15);
+  color:var(--gold-light); font-size:0.65rem; border-radius:20px;
+  letter-spacing:0.05em; margin-left:0.5rem;
+}
+
+/* ===== ACCESS ===== */
+.access-content { display:grid; grid-template-columns:1fr 1fr; gap:3rem; margin-top:2rem; }
+.access-info h3 {
+  font-size:1.15rem; font-weight:700; margin-bottom:1.2rem; color:var(--olive-dark);
+}
+.access-info p { font-size:0.9rem; color:var(--text-light); margin-bottom:0.5rem; line-height:1.8; }
+.access-detail {
+  display:flex; gap:0.6rem; align-items:flex-start; margin-bottom:0.8rem;
+}
+.access-detail-icon {
+  width:20px; flex-shrink:0; text-align:center; color:var(--gold); font-size:0.85rem; margin-top:0.15rem;
+}
+.access-detail-text { font-size:0.88rem; color:var(--text-light); line-height:1.8; }
+.access-map { border-radius:12px; overflow:hidden; min-height:350px; border:1px solid rgba(134,134,108,0.1); }
+.access-map iframe { width:100%; height:100%; min-height:350px; border:0; }
+@media (max-width:768px) {
+  .access-content { grid-template-columns:1fr; }
+}
+
+/* Cancel Policy */
+.cancel-policy {
+  margin-top:1.5rem; padding:1.2rem 1.5rem;
+  background:rgba(134,134,108,0.05); border-radius:10px;
+  border:1px solid rgba(134,134,108,0.08);
+}
+.cancel-policy-title {
+  font-size:0.8rem; font-weight:700; color:var(--olive-dark);
+  margin-bottom:0.6rem; letter-spacing:0.05em;
+}
+.cancel-policy p { font-size:0.8rem; color:var(--text-light); line-height:1.7; margin-bottom:0.2rem; }
+
+/* ===== CTA ===== */
+.cta-section {
+  text-align:center; padding:6rem 2rem;
+  background:linear-gradient(135deg, var(--olive-dark) 0%, #4a4a3a 50%, var(--olive-dark) 100%);
+  position:relative; overflow:hidden;
+}
+.cta-section::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(circle at 50% 50%, rgba(201,169,110,0.08) 0%, transparent 60%);
+}
+.cta-content { position:relative; z-index:1; }
+.cta-heading {
+  font-size:clamp(1.4rem, 3.5vw, 2rem);
+  font-weight:700; color:#fff; margin-bottom:0.6rem;
+  letter-spacing:0.05em;
+}
+.cta-sub { font-size:0.92rem; color:rgba(255,255,255,0.55); margin-bottom:2.5rem; }
+.cta-btn {
+  display:inline-flex; align-items:center; gap:0.6rem;
+  padding:1.2rem 3.5rem;
+  background:linear-gradient(135deg, var(--terra) 0%, var(--terra-light) 100%);
+  color:#fff; text-decoration:none;
+  font-size:1.1rem; font-weight:500; letter-spacing:0.15em;
+  border-radius:50px; transition:all 0.4s cubic-bezier(0.16,1,0.3,1);
+  box-shadow:0 4px 25px rgba(196,149,106,0.35);
+  position:relative; overflow:hidden;
+}
+.cta-btn::before {
+  content:''; position:absolute; inset:-2px;
+  background:linear-gradient(135deg, var(--terra-light), var(--gold), var(--terra));
+  border-radius:52px; z-index:-1; opacity:0; transition:opacity 0.3s;
+}
+.cta-btn:hover {
+  transform:translateY(-3px) scale(1.03);
+  box-shadow:0 8px 40px rgba(196,149,106,0.5);
+}
+.cta-btn:hover::before { opacity:1; }
+.cta-btn-arrow { transition:transform 0.3s; }
+.cta-btn:hover .cta-btn-arrow { transform:translateX(4px); }
+
+/* ===== FLOATING CTA (MOBILE) ===== */
+.floating-cta {
+  position:fixed; bottom:0; left:0; right:0; z-index:99;
+  padding:0.8rem 1rem; background:rgba(26,26,23,0.95);
+  backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
+  border-top:1px solid rgba(201,169,110,0.15);
+  display:none; text-align:center;
+  transform:translateY(100%);
+  transition:transform 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+.floating-cta.show { transform:translateY(0); }
+.floating-cta-btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
+  width:100%; max-width:400px;
+  padding:0.9rem 2rem;
+  background:linear-gradient(135deg, var(--terra) 0%, var(--terra-light) 100%);
+  color:#fff; text-decoration:none;
+  font-size:0.95rem; font-weight:500; letter-spacing:0.12em;
+  border-radius:50px;
+  box-shadow:0 2px 15px rgba(196,149,106,0.3);
+}
+@media (max-width:768px) {
+  .floating-cta { display:block; }
+  .cta-section { padding-bottom:8rem; }
+  footer { padding-bottom:5rem; }
+}
+
+/* ===== FOOTER ===== */
+footer {
+  text-align:center; padding:3rem 2rem;
+  background:var(--darker); color:rgba(255,255,255,0.25);
+  font-size:0.75rem; letter-spacing:0.1em;
+}
+footer a { color:rgba(255,255,255,0.35); text-decoration:none; }
+footer a:hover { color:var(--gold-light); }
+
+/* ===== DIVIDER ===== */
+.section-divider {
+  height:1px; max-width:1100px; margin:0 auto;
+  background:linear-gradient(to right, transparent, rgba(134,134,108,0.15), transparent);
+}
+
+/* ===== SMOOTH SCROLLBAR ===== */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--cream); }
+::-webkit-scrollbar-thumb { background:var(--olive-light); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--olive); }
+</style>
+</head>
+<body>
+
+<!-- ===== STICKY NAV ===== -->
+<nav class="nav" id="nav">
+  <a href="#" class="nav-logo">FPS HOKKAIDOU</a>
+  <a href="https://fpsaunayoyaku.com/?utm_source=lp&utm_medium=referral&utm_campaign=lp_nav" class="nav-cta">ご予約はこちら</a>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-glow"></div>
+  <div class="particles" id="particles"></div>
+  <div class="hero-content">
+    <p class="hero-sub">FOREST PRIVATE SAUNA HOKKAIDOU</p>
+    <h1 class="hero-title">北見唯一の<br><span class="accent">完全貸切</span>プライベートサウナ</h1>
+    <p class="hero-tagline">3棟から選べる贅沢空間。道東初のHARVIA Spirit9ストーブと天然地下水で、至高のととのいを。</p>
+    <div class="hero-cta-wrap">
+      <a href="https://fpsaunayoyaku.com/?utm_source=lp&utm_medium=referral&utm_campaign=lp_hero" class="hero-cta">
+        ご予約はこちら <span class="hero-cta-arrow">→</span>
+      </a>
+    </div>
+  </div>
+  <div class="scroll-indicator">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section class="section">
+  <div class="reveal">
+    <div class="heading-line"></div>
+    <p class="section-label">Features</p>
+    <h2 class="section-heading">3つの特徴</h2>
+    <p class="section-heading-desc">北海道の大自然の中、こだわり抜いた設備で最高のサウナ体験をお届けします。</p>
+  </div>
+  <div class="features-grid stagger-children">
+    <div class="feature-card reveal">
+      <div class="feature-icon-wrap">🔥</div>
+      <h3 class="feature-title">道東初 HARVIA Spirit9</h3>
+      <p class="feature-text">フィンランド製最高峰ストーブHARVIA Spirit9を全棟に設置。豊富な蒸気量とやわらかな熱で、本格的なフィンランド式サウナをお楽しみいただけます。</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon-wrap">💧</div>
+      <h3 class="feature-title">天然地下水の水風呂</h3>
+      <p class="feature-text">北海道の大地が育んだ天然地下水をそのまま使用。夏でも冷たく、冬は凍てつく水温で、格別の「ととのい」体験をお約束します。</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon-wrap">🌲</div>
+      <h3 class="feature-title">完全プライベート空間</h3>
+      <p class="feature-text">3棟すべてが完全貸切。周囲に広がる北海道の大自然の中、誰にも気兼ねなく、自分だけのサウナ時間をお過ごしいただけます。</p>
+    </div>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar reveal">
+    <div class="stat-item">
+      <div class="stat-number" data-count="3">0</div>
+      <div class="stat-label">棟の貸切空間</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-count="100" data-suffix="%">0%</div>
+      <div class="stat-label">完全プライベート</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-count="365" data-suffix="日">0日</div>
+      <div class="stat-label">天然地下水使用</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ===== BUILDINGS ===== -->
+<section class="section">
+  <div class="reveal">
+    <div class="heading-line"></div>
+    <p class="section-label">Buildings</p>
+    <h2 class="section-heading">3棟のご紹介</h2>
+    <p class="section-heading-desc">それぞれ異なるコンセプトを持つ3棟。お好みの空間をお選びください。</p>
+  </div>
+
+  <!-- 座禅棟 -->
+  <div class="building reveal">
+    <div class="building-header">
+      <span class="building-name">座禅棟</span>
+      <span class="building-name-en">ZAZEN</span>
+    </div>
+    <div class="building-grid">
+      <div class="building-photo reveal-left">
+        <!-- ★ 座禅棟の写真差し替え: <img> タグのコメントを外し src に画像パスを入れてください -->
+        <!-- <img src="zazen-photo.jpg" alt="座禅棟 外観"> -->
+        <p class="placeholder-label">座禅棟 写真</p>
+      </div>
+      <div class="building-floorplan reveal-right">
+        <!-- ★ 座禅棟の間取り図差し替え -->
+        <!-- <img src="zazen-floorplan.jpg" alt="座禅棟 間取り図"> -->
+        <p class="placeholder-label">座禅棟 間取り図</p>
+      </div>
+    </div>
+    <p class="building-desc">静寂の中で自分と向き合う。座禅をテーマにした棟で、心身ともにリセットできる空間です。HARVIA Spirit9ストーブによる本格的なロウリュと、天然地下水の水風呂で極上のととのいをご体験ください。</p>
+  </div>
+
+  <!-- 瞑想棟 -->
+  <div class="building reveal">
+    <div class="building-header">
+      <span class="building-name">瞑想棟</span>
+      <span class="building-name-en">MEISOU</span>
+    </div>
+    <div class="building-grid reverse">
+      <div class="building-photo reveal-right">
+        <!-- ★ 瞑想棟の写真差し替え -->
+        <!-- <img src="meisou-photo.jpg" alt="瞑想棟 外観"> -->
+        <p class="placeholder-label">瞑想棟 写真</p>
+      </div>
+      <div class="building-floorplan reveal-left">
+        <!-- ★ 瞑想棟の間取り図差し替え -->
+        <!-- <img src="meisou-floorplan.jpg" alt="瞑想棟 間取り図"> -->
+        <p class="placeholder-label">瞑想棟 間取り図</p>
+      </div>
+    </div>
+    <p class="building-desc">深い瞑想の世界へ。五感を研ぎ澄ませる設計で、日常の喧騒を忘れる特別な時間を。オホーツクの大自然に囲まれた外気浴スペースで、心ゆくまでリラックスしてください。</p>
+  </div>
+
+  <!-- 翠嵐棟 -->
+  <div class="building reveal">
+    <div class="building-header">
+      <span class="building-name">翠嵐棟</span>
+      <span class="building-name-en">SUIRAN</span>
+    </div>
+    <div class="building-grid">
+      <div class="building-photo reveal-left">
+        <!-- ★ 翠嵐棟の写真差し替え -->
+        <!-- <img src="suiran-photo.jpg" alt="翠嵐棟 外観"> -->
+        <p class="placeholder-label">翠嵐棟 写真</p>
+      </div>
+      <div class="building-floorplan reveal-right">
+        <!-- ★ 翠嵐棟の間取り図差し替え -->
+        <!-- <img src="suiran-floorplan.jpg" alt="翠嵐棟 間取り図"> -->
+        <p class="placeholder-label">翠嵐棟 間取り図</p>
+      </div>
+    </div>
+    <p class="building-desc">翠（みどり）の嵐に包まれる。自然との一体感をコンセプトにした棟で、四季折々の北海道の景色とともにサウナをお楽しみいただけます。ウッドチップを敷き詰めた外気浴スペースも完備。</p>
+  </div>
+</section>
+
+<!-- ===== PRICING ===== -->
+<div class="section-dark">
+  <div class="section-inner reveal">
+    <div class="heading-line"></div>
+    <p class="section-label">Pricing</p>
+    <h2 class="section-heading">料金のご案内</h2>
+    <p class="section-heading-desc">全棟共通の料金体系。ご利用人数に関わらず同一料金です。</p>
+
+    <table class="pricing-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>平日（月〜金）</th>
+          <th>土日祝</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="course-name">60分コース</td>
+          <td class="price">¥6,600</td>
+          <td class="price">¥7,700</td>
+        </tr>
+        <tr>
+          <td class="course-name">90分コース</td>
+          <td class="price">¥9,900</td>
+          <td class="price">¥11,000</td>
+        </tr>
+        <tr>
+          <td class="course-name">120分コース</td>
+          <td class="price price-highlight">¥12,100</td>
+          <td class="price price-highlight">¥13,200</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pricing-cards">
+      <div class="pricing-card">
+        <div class="pricing-card-name">60分コース</div>
+        <div class="pricing-card-row"><span class="pricing-card-label">平日（月〜金）</span><span class="pricing-card-price">¥6,600</span></div>
+        <div class="pricing-card-row"><span class="pricing-card-label">土日祝</span><span class="pricing-card-price">¥7,700</span></div>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-card-name">90分コース</div>
+        <div class="pricing-card-row"><span class="pricing-card-label">平日（月〜金）</span><span class="pricing-card-price">¥9,900</span></div>
+        <div class="pricing-card-row"><span class="pricing-card-label">土日祝</span><span class="pricing-card-price">¥11,000</span></div>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-card-name">120分コース</div>
+        <div class="pricing-card-row"><span class="pricing-card-label">平日（月〜金）</span><span class="pricing-card-price">¥12,100</span></div>
+        <div class="pricing-card-row"><span class="pricing-card-label">土日祝</span><span class="pricing-card-price">¥13,200</span></div>
+      </div>
+    </div>
+    <p class="pricing-note">※ 料金は税込です。全棟共通の料金です。</p>
+
+    <h3 style="font-size:0.95rem; color:var(--gold-light); margin-top:3rem; margin-bottom:0.5rem; letter-spacing:0.1em;">オプション</h3>
+    <div class="option-grid">
+      <div class="option-item"><span class="option-name">タオルセット</span><span class="option-price">¥500</span></div>
+      <div class="option-item"><span class="option-name">オロポ（グラス・氷付き）</span><span class="option-price">¥480</span></div>
+      <div class="option-item"><span class="option-name">ミネラルウォーター</span><span class="option-price">¥130</span></div>
+      <div class="option-item"><span class="option-name">ポカリスエット</span><span class="option-price">¥250</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TESTIMONIALS ===== -->
+<div class="section-dark" style="background:var(--darker);">
+  <div class="section-inner reveal">
+    <div class="heading-line"></div>
+    <p class="section-label">Voice</p>
+    <h2 class="section-heading">お客様の声</h2>
+    <div class="testimonials-grid stagger-children">
+      <div class="testimonial-card reveal">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">天然地下水の水風呂が最高でした。街中のサウナとは全く違う体験。冬場の外気浴は言葉にならない気持ちよさです。</p>
+        <div>
+          <span class="testimonial-author">30代 男性</span>
+          <span class="testimonial-badge">座禅棟</span>
+        </div>
+      </div>
+      <div class="testimonial-card reveal">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">完全貸切なので家族でゆっくり楽しめました。子どもたちも大喜び。HARVIAのストーブは蒸気がやわらかくて最高です。</p>
+        <div>
+          <span class="testimonial-author">40代 女性</span>
+          <span class="testimonial-badge">瞑想棟</span>
+        </div>
+      </div>
+      <div class="testimonial-card reveal">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">北海道の大自然に囲まれてのサウナは格別。翠嵐棟のウッドチップの外気浴スペースがお気に入り。リピート確定です。</p>
+        <div>
+          <span class="testimonial-author">20代 男性</span>
+          <span class="testimonial-badge">翠嵐棟</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEASONS ===== -->
+<section class="section">
+  <div class="reveal">
+    <div class="heading-line"></div>
+    <p class="section-label">Four Seasons</p>
+    <h2 class="section-heading">四季の魅力</h2>
+    <p class="section-heading-desc">北海道ならではの四季折々の表情が、サウナ体験をさらに特別なものにします。</p>
+  </div>
+  <div class="seasons-grid stagger-children">
+    <div class="season-card reveal">
+      <div class="season-icon">🌸</div>
+      <h3 class="season-name">春</h3>
+      <p class="season-text">雪解けの清々しい空気の中、新緑が芽吹く北海道の春。外気浴で感じるひんやりとした風が格別です。</p>
+    </div>
+    <div class="season-card reveal">
+      <div class="season-icon">🌻</div>
+      <h3 class="season-name">夏</h3>
+      <p class="season-text">広大なひまわり畑に囲まれたオホーツクの夏。天然地下水の水風呂が、暑さを忘れさせてくれます。</p>
+    </div>
+    <div class="season-card reveal">
+      <div class="season-icon">🍂</div>
+      <h3 class="season-name">秋</h3>
+      <p class="season-text">紅葉に染まる大自然。澄み切った空気の中での外気浴は、この季節だけの特別な体験です。</p>
+    </div>
+    <div class="season-card reveal">
+      <div class="season-icon">❄️</div>
+      <h3 class="season-name">冬</h3>
+      <p class="season-text">白銀の世界に佇むサウナ小屋。極寒の外気浴と熱いサウナのコントラストが、究極のととのいを生みます。</p>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ===== ACCESS ===== -->
+<section class="section">
+  <div class="reveal">
+    <div class="heading-line"></div>
+    <p class="section-label">Access</p>
+    <h2 class="section-heading">アクセス・施設情報</h2>
+  </div>
+  <div class="access-content reveal">
+    <div class="access-info">
+      <h3>Forest Private Sauna HOKKAIDOU</h3>
+      <div class="access-detail">
+        <div class="access-detail-icon">📍</div>
+        <div class="access-detail-text">〒099-2100<br>北海道 北見市 端野町川向727-6</div>
+      </div>
+      <div class="access-detail">
+        <div class="access-detail-icon">📞</div>
+        <div class="access-detail-text">0157-57-4321</div>
+      </div>
+      <div class="access-detail">
+        <div class="access-detail-icon">🕙</div>
+        <div class="access-detail-text">営業時間: 10:00〜22:00<br><span style="font-size:0.8rem;">（最終受付は棟・コースにより異なります）</span></div>
+      </div>
+
+      <div class="cancel-policy">
+        <div class="cancel-policy-title">キャンセルポリシー</div>
+        <p>ご利用日の2日前 17:00まで → 無料</p>
+        <p>ご利用日の1日前 12:00まで → 50%</p>
+        <p>ご利用日の1日前 12:01以降 → 100%</p>
+      </div>
+    </div>
+    <div class="access-map reveal-right">
+      <iframe src="https://maps.google.com/maps?q=43.82858417495621, 143.98964719734252&t=&z=15&ie=UTF8&iwloc=&output=embed" allowfullscreen loading="lazy" style="border:0;"></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="cta-section">
+  <div class="cta-content reveal">
+    <h2 class="cta-heading">至高のととのいを体験する</h2>
+    <p class="cta-sub">完全貸切プライベートサウナで、特別な時間をお過ごしください。</p>
+    <a href="https://fpsaunayoyaku.com/?utm_source=lp&utm_medium=referral&utm_campaign=lp_bottom" class="cta-btn">
+      ご予約はこちら <span class="cta-btn-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- ===== FLOATING CTA (MOBILE) ===== -->
+<div class="floating-cta" id="floatingCta">
+  <a href="https://fpsaunayoyaku.com/?utm_source=lp&utm_medium=referral&utm_campaign=lp_floating" class="floating-cta-btn">
+    今すぐ予約する →
+  </a>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <p>&copy; 2026 Forest Private Sauna HOKKAIDOU. All rights reserved.</p>
+</footer>
+
+<script>
+// ===== Intersection Observer for reveal animations =====
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      revealObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale, .building').forEach(el => {
+  revealObs.observe(el);
+});
+
+// ===== Sticky Nav =====
+const nav = document.getElementById('nav');
+let lastScroll = 0;
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  if (y > 80) {
+    nav.classList.add('scrolled');
+  } else {
+    nav.classList.remove('scrolled');
+  }
+  lastScroll = y;
+}, { passive: true });
+
+// ===== Floating CTA =====
+const floatingCta = document.getElementById('floatingCta');
+const heroSection = document.getElementById('hero');
+const floatingObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) {
+      floatingCta.classList.add('show');
+    } else {
+      floatingCta.classList.remove('show');
+    }
+  });
+}, { threshold: 0 });
+floatingObs.observe(heroSection);
+
+// ===== Counter Animation =====
+const counterObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const el = e.target;
+      const target = parseInt(el.dataset.count);
+      const suffix = el.dataset.suffix || '';
+      const duration = 1500;
+      const start = performance.now();
+      const animate = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.floor(eased * target);
+        el.textContent = current + suffix;
+        if (progress < 1) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+      counterObs.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.stat-number[data-count]').forEach(el => counterObs.observe(el));
+
+// ===== Hero Particles =====
+const particlesContainer = document.getElementById('particles');
+for (let i = 0; i < 20; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left = Math.random() * 100 + '%';
+  p.style.animationDuration = (6 + Math.random() * 8) + 's';
+  p.style.animationDelay = Math.random() * 8 + 's';
+  p.style.width = p.style.height = (1 + Math.random() * 2) + 'px';
+  particlesContainer.appendChild(p);
+}
+</script>
+
+</body>
+</html>
