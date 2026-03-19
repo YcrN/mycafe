@@ -335,7 +335,18 @@ function showChapter(num, title, cb) {
 
 // --- お金フォーマット ---
 function formatMoney(n) {
-  if (n >= 100000000) return (n / 100000000) + '億円';
-  if (n >= 10000) return (n / 10000) + '万円';
+  if (n >= 100000000) {
+    const oku = Math.floor(n / 100000000);
+    const rem = n % 100000000;
+    if (rem === 0) return oku + '億円';
+    if (rem >= 10000) return oku + '億' + Math.floor(rem / 10000) + '万円';
+    return oku + '億' + rem + '円';
+  }
+  if (n >= 10000) {
+    const man = Math.floor(n / 10000);
+    const rem = n % 10000;
+    if (rem === 0) return man + '万円';
+    return man + '万' + rem + '円';
+  }
   return n + '円';
 }

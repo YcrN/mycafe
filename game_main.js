@@ -321,7 +321,7 @@ function drawEnding() {
     '夢のパン屋「ひまわりベーカリー」を開いた',
     '',
     '',
-    '使ったお金: ' + formatMoney(10000000000 - G.money + 500),
+    '使ったお金: ' + formatMoney(1000000000 - G.money + 500),
     '残りのお金: ' + formatMoney(G.money),
     '',
     '',

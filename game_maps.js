@@ -294,7 +294,7 @@ const MAPS = {
       'RRCRRRRRRCCCCCOR',
       'RRCCCCCCRRRRRCOR',
       'RRRRRCCCCCCCCCOR',
-      'RRRRRRRRRRRRRRRR',
+      'RRRRRRRCCRRRRRRR',
     ],
     transitions: [
       { x: 14, y: 7, map: 'cave2', px: 1, py: 7, dir: 2 },
@@ -303,6 +303,7 @@ const MAPS = {
       { x: 14, y: 11, map: 'cave2', px: 1, py: 11, dir: 2 },
       { x: 14, y: 12, map: 'cave2', px: 1, py: 12, dir: 2 },
       { x: 7, y: 13, map: 'world', px: 17, py: 8, dir: 0 },
+      { x: 8, y: 13, map: 'world', px: 17, py: 8, dir: 0 },
     ],
   },
 
@@ -312,7 +313,7 @@ const MAPS = {
       'RRRRRRRRRRRRRRRR',
       'RCCCCCRRCCCCCCOR',
       'RCRRRCRRCRRRRCCR',
-      'RCCCRCRRCRCCCRDR',
+      'RCCCRCRRCRCCCRCR',
       'RRRCRCCCCRCCCRRR',
       'RRCCRRRRCRRRCCCR',
       'RRCRRRCCCCCRCCCR',

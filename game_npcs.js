@@ -353,7 +353,7 @@ function getNPCsForMap(mapId) {
             '＊ 10億円を受け取った！！',
           ], '', () => {
             f.claimedPrize = true;
-            G.money += 10000000000;
+            G.money += 1000000000;
           });
         } else {
           showDialog(['スタッフ「改めましておめでとうございます！ 素敵な使い方をしてくださいね」']);
