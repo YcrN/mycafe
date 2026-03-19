@@ -26,40 +26,31 @@ canvas {
   display: block;
   border: 1px solid #333;
 }
-#touchLeft, #touchRight {
-  display: none;
-  position: absolute;
-  bottom: 0;
-  height: 50%;
-  z-index: 5;
-  pointer-events: all;
-}
-#touchLeft { left: 0; width: 60%; }
-#touchRight { right: 0; width: 40%; }
 #missileBtn {
   display: none;
   position: absolute;
   bottom: 30px;
   right: 20px;
-  width: 70px;
-  height: 70px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: rgba(255, 50, 50, 0.4);
-  border: 2px solid rgba(255, 100, 100, 0.6);
+  border: 3px solid rgba(255, 100, 100, 0.6);
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-family: 'Courier New', monospace;
-  z-index: 6;
+  z-index: 20;
   pointer-events: all;
   text-align: center;
-  line-height: 70px;
+  line-height: 80px;
   text-shadow: 0 0 5px #f00;
 }
-#missileBtn:active {
+#missileBtn.active {
   background: rgba(255, 50, 50, 0.7);
+  border-color: rgba(255, 200, 200, 0.9);
 }
 @media (pointer: coarse) {
-  #touchLeft, #touchRight, #missileBtn { display: block; }
+  #missileBtn { display: block; }
 }
 #ui {
   position: absolute;
@@ -162,8 +153,6 @@ canvas {
     <div id="finalScore">SCORE: 0</div>
     <button class="startBtn" id="retryBtn">RETRY</button>
   </div>
-  <div id="touchLeft"></div>
-  <div id="touchRight"></div>
   <div id="missileBtn">MISSILE</div>
 </div>
 
@@ -211,8 +200,10 @@ document.addEventListener('keydown', e => {
 document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
 // タッチ入力
-let touchMove = { active: false, x: 0, y: 0, startX: 0, startY: 0 };
+// prevX/prevY: 前フレームのタッチ座標（フレーム間差分で移動量を計算）
+let touchMove = { active: false, prevX: 0, prevY: 0, dx: 0, dy: 0, id: -1 };
 let touchMissile = false;
+let missileTouch = { id: -1 };
 
 // キャンバス上の座標に変換
 function canvasCoord(clientX, clientY) {
@@ -223,47 +214,93 @@ function canvasCoord(clientX, clientY) {
   };
 }
 
-// 移動用タッチ（画面左側）
-const touchLeftEl = document.getElementById('touchLeft');
-touchLeftEl.addEventListener('touchstart', e => {
+// タッチイベントからIDで特定のタッチを探す
+function findTouch(touches, id) {
+  for (let i = 0; i < touches.length; i++) {
+    if (touches[i].identifier === id) return touches[i];
+  }
+  return null;
+}
+
+// キャンバス全体でタッチ移動を受け付ける
+canvas.addEventListener('touchstart', e => {
   e.preventDefault();
-  const t = e.touches[0];
+  if (gameState !== 'playing') return;
+  // まだ移動タッチが始まってなければ開始
+  if (!touchMove.active) {
+    const t = e.changedTouches[0];
+    const c = canvasCoord(t.clientX, t.clientY);
+    touchMove = { active: true, prevX: c.x, prevY: c.y, dx: 0, dy: 0, id: t.identifier };
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (!touchMove.active) return;
+  const t = findTouch(e.touches, touchMove.id);
+  if (!t) return;
   const c = canvasCoord(t.clientX, t.clientY);
-  touchMove = { active: true, x: c.x, y: c.y, startX: c.x, startY: c.y };
+  // フレーム間差分を記録（update()で消費）
+  touchMove.dx += c.x - touchMove.prevX;
+  touchMove.dy += c.y - touchMove.prevY;
+  touchMove.prevX = c.x;
+  touchMove.prevY = c.y;
 }, { passive: false });
-touchLeftEl.addEventListener('touchmove', e => {
+
+canvas.addEventListener('touchend', e => {
   e.preventDefault();
-  const t = e.touches[0];
-  const c = canvasCoord(t.clientX, t.clientY);
-  touchMove.x = c.x;
-  touchMove.y = c.y;
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    if (e.changedTouches[i].identifier === touchMove.id) {
+      touchMove.active = false;
+      touchMove.dx = 0;
+      touchMove.dy = 0;
+      touchMove.id = -1;
+    }
+  }
 }, { passive: false });
-touchLeftEl.addEventListener('touchend', e => {
-  e.preventDefault();
+
+canvas.addEventListener('touchcancel', e => {
   touchMove.active = false;
-}, { passive: false });
-touchLeftEl.addEventListener('touchcancel', e => {
-  touchMove.active = false;
+  touchMove.dx = 0;
+  touchMove.dy = 0;
+  touchMove.id = -1;
 }, { passive: false });
 
 // ミサイルボタン
 const missileBtnEl = document.getElementById('missileBtn');
 missileBtnEl.addEventListener('touchstart', e => {
   e.preventDefault();
+  e.stopPropagation();
   touchMissile = true;
+  missileTouch.id = e.changedTouches[0].identifier;
+  missileBtnEl.classList.add('active');
 }, { passive: false });
 missileBtnEl.addEventListener('touchend', e => {
   e.preventDefault();
+  e.stopPropagation();
   touchMissile = false;
+  missileTouch.id = -1;
+  missileBtnEl.classList.remove('active');
 }, { passive: false });
-missileBtnEl.addEventListener('touchcancel', () => { touchMissile = false; });
+missileBtnEl.addEventListener('touchcancel', e => {
+  touchMissile = false;
+  missileTouch.id = -1;
+  missileBtnEl.classList.remove('active');
+});
 
-// スタート・リトライ
-document.getElementById('startBtn').addEventListener('click', startGame);
-document.getElementById('retryBtn').addEventListener('click', startGame);
-// タッチでも確実に反応させる
-document.getElementById('startBtn').addEventListener('touchend', e => { e.preventDefault(); startGame(); });
-document.getElementById('retryBtn').addEventListener('touchend', e => { e.preventDefault(); startGame(); });
+// スタート・リトライ（二重呼び出し防止）
+let startGameLock = false;
+function safeStartGame(e) {
+  if (e) e.preventDefault();
+  if (startGameLock) return;
+  startGameLock = true;
+  startGame();
+  setTimeout(() => { startGameLock = false; }, 300);
+}
+document.getElementById('startBtn').addEventListener('click', safeStartGame);
+document.getElementById('retryBtn').addEventListener('click', safeStartGame);
+document.getElementById('startBtn').addEventListener('touchend', safeStartGame);
+document.getElementById('retryBtn').addEventListener('touchend', safeStartGame);
 
 // プレイヤー
 let player = null;
@@ -307,10 +344,12 @@ function startGame() {
   spawnInterval = 60;
   shakeTimer = 0;
   shakeIntensity = 0;
-  // キー入力をクリア
+  // 入力をクリア
   Object.keys(keys).forEach(k => { keys[k] = false; });
-  touchMove.active = false;
+  touchMove = { active: false, prevX: 0, prevY: 0, dx: 0, dy: 0, id: -1 };
   touchMissile = false;
+  missileTouch.id = -1;
+  missileBtnEl.classList.remove('active');
   player = {
     x: W / 2,
     y: H - 100,
@@ -519,13 +558,12 @@ function update() {
     if (keys['arrowright'] || keys['d']) player.x += spd;
     if (keys['arrowup'] || keys['w']) player.y -= spd;
     if (keys['arrowdown'] || keys['s']) player.y += spd;
-    // タッチ移動（ドラッグの差分で移動）
-    if (touchMove.active) {
-      const dx = touchMove.x - touchMove.startX;
-      const dy = touchMove.y - touchMove.startY;
-      const touchSpeed = 0.15;
-      player.x += dx * touchSpeed;
-      player.y += dy * touchSpeed;
+    // タッチ移動（フレーム間差分で移動）
+    if (touchMove.active && (touchMove.dx !== 0 || touchMove.dy !== 0)) {
+      player.x += touchMove.dx;
+      player.y += touchMove.dy;
+      touchMove.dx = 0;
+      touchMove.dy = 0;
     }
     player.x = Math.max(15, Math.min(W - 15, player.x));
     player.y = Math.max(15, Math.min(H - 15, player.y));
