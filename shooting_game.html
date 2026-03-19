@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>MACROSS STORM - マクロスストーム</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -14,6 +14,10 @@ body {
   min-height: 100vh;
   font-family: 'Courier New', monospace;
   overflow: hidden;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 #gameContainer {
   position: relative;
@@ -21,6 +25,41 @@ body {
 canvas {
   display: block;
   border: 1px solid #333;
+}
+#touchLeft, #touchRight {
+  display: none;
+  position: absolute;
+  bottom: 0;
+  height: 50%;
+  z-index: 5;
+  pointer-events: all;
+}
+#touchLeft { left: 0; width: 60%; }
+#touchRight { right: 0; width: 40%; }
+#missileBtn {
+  display: none;
+  position: absolute;
+  bottom: 30px;
+  right: 20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(255, 50, 50, 0.4);
+  border: 2px solid rgba(255, 100, 100, 0.6);
+  color: #fff;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  z-index: 6;
+  pointer-events: all;
+  text-align: center;
+  line-height: 70px;
+  text-shadow: 0 0 5px #f00;
+}
+#missileBtn:active {
+  background: rgba(255, 50, 50, 0.7);
+}
+@media (pointer: coarse) {
+  #touchLeft, #touchRight, #missileBtn { display: block; }
 }
 #ui {
   position: absolute;
@@ -105,9 +144,12 @@ canvas {
     <h1>MACROSS STORM</h1>
     <h2>- マクロスストーム -</h2>
     <div class="info">
-      移動: 矢印キー / WASD<br>
+      <span class="controls-pc">移動: 矢印キー / WASD<br>
       ミサイル発射: Zキー / スペース（長押しで連射）<br>
-      バルカン: 自動発射<br><br>
+      バルカン: 自動発射</span>
+      <span class="controls-mobile" style="display:none;">移動: 画面左側をドラッグ<br>
+      ミサイル: 画面右下の赤ボタン長押し<br>
+      バルカン: 自動発射</span><br><br>
       照準内の敵をロックオン！<br>
       ミサイルが自動追尾で殲滅する！<br><br>
       ⚠ 後半の敵は熱を出さない…<br>
@@ -120,6 +162,9 @@ canvas {
     <div id="finalScore">SCORE: 0</div>
     <button class="startBtn" id="retryBtn">RETRY</button>
   </div>
+  <div id="touchLeft"></div>
+  <div id="touchRight"></div>
+  <div id="missileBtn">MISSILE</div>
 </div>
 
 <script>
@@ -144,6 +189,17 @@ let difficulty = 1;
 let shakeTimer = 0;
 let shakeIntensity = 0;
 
+// タッチデバイス判定
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+
+// モバイル用操作説明切替
+if (isTouchDevice) {
+  const pcCtrl = document.querySelector('.controls-pc');
+  const mobileCtrl = document.querySelector('.controls-mobile');
+  if (pcCtrl) pcCtrl.style.display = 'none';
+  if (mobileCtrl) mobileCtrl.style.display = 'inline';
+}
+
 // 入力
 const keys = {};
 document.addEventListener('keydown', e => {
@@ -154,9 +210,60 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
+// タッチ入力
+let touchMove = { active: false, x: 0, y: 0, startX: 0, startY: 0 };
+let touchMissile = false;
+
+// キャンバス上の座標に変換
+function canvasCoord(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (clientX - rect.left) * (W / rect.width),
+    y: (clientY - rect.top) * (H / rect.height)
+  };
+}
+
+// 移動用タッチ（画面左側）
+const touchLeftEl = document.getElementById('touchLeft');
+touchLeftEl.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  const c = canvasCoord(t.clientX, t.clientY);
+  touchMove = { active: true, x: c.x, y: c.y, startX: c.x, startY: c.y };
+}, { passive: false });
+touchLeftEl.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  const c = canvasCoord(t.clientX, t.clientY);
+  touchMove.x = c.x;
+  touchMove.y = c.y;
+}, { passive: false });
+touchLeftEl.addEventListener('touchend', e => {
+  e.preventDefault();
+  touchMove.active = false;
+}, { passive: false });
+touchLeftEl.addEventListener('touchcancel', e => {
+  touchMove.active = false;
+}, { passive: false });
+
+// ミサイルボタン
+const missileBtnEl = document.getElementById('missileBtn');
+missileBtnEl.addEventListener('touchstart', e => {
+  e.preventDefault();
+  touchMissile = true;
+}, { passive: false });
+missileBtnEl.addEventListener('touchend', e => {
+  e.preventDefault();
+  touchMissile = false;
+}, { passive: false });
+missileBtnEl.addEventListener('touchcancel', () => { touchMissile = false; });
+
 // スタート・リトライ
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('retryBtn').addEventListener('click', startGame);
+// タッチでも確実に反応させる
+document.getElementById('startBtn').addEventListener('touchend', e => { e.preventDefault(); startGame(); });
+document.getElementById('retryBtn').addEventListener('touchend', e => { e.preventDefault(); startGame(); });
 
 // プレイヤー
 let player = null;
@@ -196,6 +303,14 @@ function startGame() {
   stage = 1;
   stageTimer = 0;
   difficulty = 1;
+  spawnTimer = 0;
+  spawnInterval = 60;
+  shakeTimer = 0;
+  shakeIntensity = 0;
+  // キー入力をクリア
+  Object.keys(keys).forEach(k => { keys[k] = false; });
+  touchMove.active = false;
+  touchMissile = false;
   player = {
     x: W / 2,
     y: H - 100,
@@ -399,10 +514,19 @@ function update() {
   if (player) {
     if (player.invincible > 0) player.invincible--;
     const spd = player.speed;
+    // キーボード移動
     if (keys['arrowleft'] || keys['a']) player.x -= spd;
     if (keys['arrowright'] || keys['d']) player.x += spd;
     if (keys['arrowup'] || keys['w']) player.y -= spd;
     if (keys['arrowdown'] || keys['s']) player.y += spd;
+    // タッチ移動（ドラッグの差分で移動）
+    if (touchMove.active) {
+      const dx = touchMove.x - touchMove.startX;
+      const dy = touchMove.y - touchMove.startY;
+      const touchSpeed = 0.15;
+      player.x += dx * touchSpeed;
+      player.y += dy * touchSpeed;
+    }
     player.x = Math.max(15, Math.min(W - 15, player.x));
     player.y = Math.max(15, Math.min(H - 15, player.y));
 
@@ -432,7 +556,7 @@ function update() {
     }
 
     // ミサイル発射
-    if (keys['z'] || keys[' ']) {
+    if (keys['z'] || keys[' '] || touchMissile) {
       player.missileTimer++;
       if (player.missileTimer >= 10) {
         fireMissiles();
@@ -909,6 +1033,26 @@ function draw() {
 
   ctx.restore();
 }
+
+// 画面リサイズ対応
+function resizeCanvas() {
+  const container = document.getElementById('gameContainer');
+  const maxH = window.innerHeight;
+  const maxW = window.innerWidth;
+  const ratio = W / H;
+  let displayH = maxH;
+  let displayW = displayH * ratio;
+  if (displayW > maxW) {
+    displayW = maxW;
+    displayH = displayW / ratio;
+  }
+  canvas.style.width = displayW + 'px';
+  canvas.style.height = displayH + 'px';
+  container.style.width = displayW + 'px';
+  container.style.height = displayH + 'px';
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
 // メインループ
 function gameLoop() {
