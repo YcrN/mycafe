@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex">
+<title>幸運の娘ハナ ～宝くじ長者物語～</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#111;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;overflow:hidden;font-family:sans-serif}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid #333}
+#pad{display:none;position:fixed;bottom:10px;left:0;width:100%;justify-content:space-between;align-items:center;padding:0 20px;z-index:10}
+.dpad{position:relative;width:130px;height:130px}
+.dpad button{position:absolute;width:44px;height:44px;background:rgba(255,255,255,0.25);border:2px solid rgba(255,255,255,0.4);border-radius:8px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dpad .up{top:0;left:43px}
+.dpad .down{bottom:0;left:43px}
+.dpad .left{top:43px;left:0}
+.dpad .right{top:43px;right:0}
+.abtn{display:flex;gap:12px}
+.abtn button{width:56px;height:56px;border-radius:50%;font-size:16px;font-weight:bold;border:2px solid rgba(255,255,255,0.4);color:#fff;cursor:pointer}
+.abtn .btn-a{background:rgba(220,60,60,0.5)}
+.abtn .btn-b{background:rgba(60,60,220,0.5)}
+@media(pointer:coarse){#pad{display:flex}}
+@media(max-width:600px){#pad{display:flex}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="pad">
+<div class="dpad">
+<button class="up">▲</button>
+<button class="down">▼</button>
+<button class="left">◀</button>
+<button class="right">▶</button>
+</div>
+<div class="abtn">
+<button class="btn-b">B</button>
+<button class="btn-a">A</button>
+</div>
+</div>
+<script src="game_engine.js"></script>
+<script src="game_tiles.js"></script>
+<script src="game_maps.js"></script>
+<script src="game_npcs.js"></script>
+<script src="game_story.js"></script>
+<script src="game_main.js"></script>
+</body>
+</html>
