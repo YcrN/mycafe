@@ -7,7 +7,7 @@
 const T = 32;       // タイルサイズ(px)
 const COLS = 16;    // 画面横タイル数
 const ROWS = 12;    // 画面縦タイル数
-const MOVE_SPD = 4; // 移動アニメフレーム数
+const MOVE_SPD = 8; // 移動アニメフレーム数
 const TEXT_SPD = 2; // テキスト表示速度
 
 const cv = document.getElementById('c');

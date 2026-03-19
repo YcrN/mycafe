@@ -128,7 +128,7 @@ const MAPS = {
       'mgggggpwgggpggggggpggmm',
       'mggggppttbttpggttggpgmm',
       'mgggppgggggpggttggpggmm',
-      'mggppggfggfpggttgppggmm',
+      'mggppggfggfpggttgkpggmm',
       'mgppggfggffpppppppgggmm',
       'mppgggfggggpggggggggsmm',
       'mpppppppppppgggggggggmm',
@@ -339,18 +339,16 @@ const MAPS = {
   cave3: {
     data: [
       'RRRRRRRRRR',
-      'RCCCCCCCOR',
+      'RCCCCCCCCR',
       'RCRRRRCCCR',
       'RCCCCRCCCR',
       'RRRRCRCCCR',
-      'RCCCCRCCOR',
+      'RCCCCRCCCR',
       'oCCCCCCCCR',
       'RRRRRRRRRR',
     ],
     transitions: [
       { x: 0, y: 6, map: 'cave2', px: 13, py: 1, dir: 1 },
-      { x: 8, y: 1, map: 'cave2', px: 13, py: 1, dir: 1 },
-      { x: 8, y: 5, map: 'cave2', px: 13, py: 1, dir: 1 },
     ],
   },
 };
