@@ -11,7 +11,7 @@ function checkStepEvents() {
   const mapId = G.mapId;
 
   // ゲーム開始：家を出たとき
-  if (mapId === 'village' && !f.intro && (p.x === 5 && p.y === 2)) {
+  if (mapId === 'village' && !f.intro && (p.x === 6 && p.y === 2)) {
     f.intro = true;
     showDialog([
       'ハナ「今日もいい天気... バイトの前に宝くじの結果を見に行こう」',
@@ -63,7 +63,7 @@ function checkStepEvents() {
   }
 
   // 洞窟に初めて入ったとき（イベント前）
-  if (mapId === 'cave' && !f.firstCave && !f.heardAboutChild) {
+  if (mapId === 'cave' && !f.firstCaveEarly && !f.firstCave && !f.heardAboutChild) {
     f.firstCaveEarly = true;
     showDialog([
       'ハナ「暗い洞窟... ちょっと怖いけど、探検してみよう」',

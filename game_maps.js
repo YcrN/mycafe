@@ -18,7 +18,7 @@ const MAPS = {
       '##########',
     ],
     transitions: [
-      { x: 4, y: 6, map: 'village', px: 5, py: 4, dir: 0 },
+      { x: 4, y: 6, map: 'village', px: 6, py: 2, dir: 0 },
     ],
   },
 
@@ -39,10 +39,10 @@ const MAPS = {
       'ttttpptttttppttt',
     ],
     transitions: [
-      { x: 5, y: 1, map: 'home', px: 4, py: 5, dir: 3 },
-      { x: 11, y: 1, map: 'shop', px: 4, py: 5, dir: 3 },
-      { x: 5, y: 5, map: 'chief', px: 4, py: 5, dir: 3 },
-      { x: 9, y: 6, map: 'bakery_closed', px: 4, py: 5, dir: 3 },
+      { x: 6, y: 1, map: 'home', px: 4, py: 5, dir: 3 },
+      { x: 12, y: 1, map: 'shop', px: 4, py: 5, dir: 3 },
+      { x: 2, y: 5, map: 'chief', px: 4, py: 5, dir: 3 },
+      { x: 10, y: 6, map: 'bakery_closed', px: 4, py: 5, dir: 3 },
       { x: 4, y: 11, map: 'world', px: 5, py: 10, dir: 0 },
       { x: 5, y: 11, map: 'world', px: 5, py: 10, dir: 0 },
       { x: 12, y: 11, map: 'world', px: 5, py: 10, dir: 0 },
@@ -63,7 +63,7 @@ const MAPS = {
       '##########',
     ],
     transitions: [
-      { x: 4, y: 6, map: 'village', px: 11, py: 2, dir: 0 },
+      { x: 4, y: 6, map: 'village', px: 12, py: 2, dir: 0 },
     ],
   },
 
@@ -80,7 +80,7 @@ const MAPS = {
       '##########',
     ],
     transitions: [
-      { x: 4, y: 6, map: 'village', px: 5, py: 6, dir: 0 },
+      { x: 4, y: 6, map: 'village', px: 2, py: 6, dir: 0 },
     ],
   },
 
@@ -97,7 +97,7 @@ const MAPS = {
       '##########',
     ],
     transitions: [
-      { x: 4, y: 6, map: 'village', px: 9, py: 7, dir: 0 },
+      { x: 4, y: 6, map: 'village', px: 10, py: 7, dir: 0 },
     ],
   },
 
@@ -114,7 +114,7 @@ const MAPS = {
       '##########',
     ],
     transitions: [
-      { x: 4, y: 6, map: 'village', px: 9, py: 7, dir: 0 },
+      { x: 4, y: 6, map: 'village', px: 10, py: 7, dir: 0 },
     ],
   },
 

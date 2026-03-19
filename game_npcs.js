@@ -265,7 +265,7 @@ function getNPCsForMap(mapId) {
                 G.money -= 200000000;
                 f.openedBakery = true;
                 // パン屋マップへのトランジションを更新
-                MAPS.village.transitions[3] = { x: 9, y: 6, map: 'bakery', px: 4, py: 5, dir: 3 };
+                MAPS.village.transitions[3] = { x: 10, y: 6, map: 'bakery', px: 4, py: 5, dir: 3 };
                 showDialog([
                   '＊ 夢のパン屋「ひまわりベーカリー」がオープンした！',
                   'ハナ「やった... 夢が叶った！ お母さんみたいな美味しいパンを作るんだ！」',
