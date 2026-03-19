@@ -430,15 +430,15 @@ function spawnMissileTrail(x, y) {
 // 各門ごとに直進距離が異なる（前方の門ほど短く、後方ほど長い）
 const missileTubes = [
   // 左側4門（前から順に）
-  { side: -1, offsetX: -16, offsetY: -8,  spreadAngle: -0.5, straightFrames: 4  },
-  { side: -1, offsetX: -20, offsetY: -2,  spreadAngle: -0.7, straightFrames: 8  },
-  { side: -1, offsetX: -22, offsetY: 4,   spreadAngle: -0.9, straightFrames: 12 },
-  { side: -1, offsetX: -20, offsetY: 10,  spreadAngle: -1.1, straightFrames: 16 },
+  { side: -1, offsetX: -16, offsetY: -8,  spreadAngle: -0.5, straightFrames: 2 },
+  { side: -1, offsetX: -20, offsetY: -2,  spreadAngle: -0.7, straightFrames: 4 },
+  { side: -1, offsetX: -22, offsetY: 4,   spreadAngle: -0.9, straightFrames: 6 },
+  { side: -1, offsetX: -20, offsetY: 10,  spreadAngle: -1.1, straightFrames: 8 },
   // 右側4門（前から順に）
-  { side:  1, offsetX: 16,  offsetY: -8,  spreadAngle: 0.5,  straightFrames: 4  },
-  { side:  1, offsetX: 20,  offsetY: -2,  spreadAngle: 0.7,  straightFrames: 8  },
-  { side:  1, offsetX: 22,  offsetY: 4,   spreadAngle: 0.9,  straightFrames: 12 },
-  { side:  1, offsetX: 20,  offsetY: 10,  spreadAngle: 1.1,  straightFrames: 16 },
+  { side:  1, offsetX: 16,  offsetY: -8,  spreadAngle: 0.5,  straightFrames: 2 },
+  { side:  1, offsetX: 20,  offsetY: -2,  spreadAngle: 0.7,  straightFrames: 4 },
+  { side:  1, offsetX: 22,  offsetY: 4,   spreadAngle: 0.9,  straightFrames: 6 },
+  { side:  1, offsetX: 20,  offsetY: 10,  spreadAngle: 1.1,  straightFrames: 8 },
 ];
 let tubeIndex = 0;
 
