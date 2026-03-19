@@ -34,20 +34,24 @@ canvas {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: rgba(255, 50, 50, 0.4);
-  border: 3px solid rgba(255, 100, 100, 0.6);
-  color: #fff;
-  font-size: 12px;
+  background: rgba(100, 100, 100, 0.3);
+  border: 3px solid rgba(150, 150, 150, 0.5);
+  color: #aaa;
+  font-size: 11px;
   font-family: 'Courier New', monospace;
   z-index: 20;
   pointer-events: all;
   text-align: center;
-  line-height: 80px;
-  text-shadow: 0 0 5px #f00;
+  line-height: 16px;
+  padding-top: 24px;
+  text-shadow: 0 0 3px #888;
 }
 #missileBtn.active {
-  background: rgba(255, 50, 50, 0.7);
+  background: rgba(255, 50, 50, 0.6);
   border-color: rgba(255, 200, 200, 0.9);
+  color: #fff;
+  text-shadow: 0 0 8px #f00;
+  box-shadow: 0 0 15px rgba(255, 50, 50, 0.5);
 }
 @media (pointer: coarse) {
   #missileBtn { display: block; }
@@ -138,8 +142,8 @@ canvas {
       <span class="controls-pc">移動: 矢印キー / WASD<br>
       ミサイル発射: Zキー / スペース（長押しで連射）<br>
       バルカン: 自動発射</span>
-      <span class="controls-mobile" style="display:none;">移動: 画面左側をドラッグ<br>
-      ミサイル: 画面右下の赤ボタン長押し<br>
+      <span class="controls-mobile" style="display:none;">移動: 画面をドラッグ<br>
+      ミサイル: 右下ボタンでON/OFF切替<br>
       バルカン: 自動発射</span><br><br>
       照準内の敵をロックオン！<br>
       ミサイルが自動追尾で殲滅する！<br><br>
@@ -151,9 +155,8 @@ canvas {
   <div id="gameOverScreen" style="display:none;">
     <h1>GAME OVER</h1>
     <div id="finalScore">SCORE: 0</div>
-    <button class="startBtn" id="retryBtn">RETRY</button>
   </div>
-  <div id="missileBtn">MISSILE</div>
+  <div id="missileBtn">MISSILE<br>OFF</div>
 </div>
 
 <script>
@@ -203,7 +206,6 @@ document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 // prevX/prevY: 前フレームのタッチ座標（フレーム間差分で移動量を計算）
 let touchMove = { active: false, prevX: 0, prevY: 0, dx: 0, dy: 0, id: -1 };
 let touchMissile = false;
-let missileTouch = { id: -1 };
 
 // キャンバス上の座標に変換
 function canvasCoord(clientX, clientY) {
@@ -266,29 +268,25 @@ canvas.addEventListener('touchcancel', e => {
   touchMove.id = -1;
 }, { passive: false });
 
-// ミサイルボタン
+// ミサイルボタン（トグルスイッチ）
 const missileBtnEl = document.getElementById('missileBtn');
-missileBtnEl.addEventListener('touchstart', e => {
+function toggleMissile(e) {
   e.preventDefault();
   e.stopPropagation();
-  touchMissile = true;
-  missileTouch.id = e.changedTouches[0].identifier;
-  missileBtnEl.classList.add('active');
-}, { passive: false });
-missileBtnEl.addEventListener('touchend', e => {
-  e.preventDefault();
-  e.stopPropagation();
-  touchMissile = false;
-  missileTouch.id = -1;
-  missileBtnEl.classList.remove('active');
-}, { passive: false });
-missileBtnEl.addEventListener('touchcancel', e => {
-  touchMissile = false;
-  missileTouch.id = -1;
-  missileBtnEl.classList.remove('active');
-});
+  if (gameState !== 'playing') return;
+  touchMissile = !touchMissile;
+  if (touchMissile) {
+    missileBtnEl.classList.add('active');
+    missileBtnEl.innerHTML = 'MISSILE<br>ON';
+  } else {
+    missileBtnEl.classList.remove('active');
+    missileBtnEl.innerHTML = 'MISSILE<br>OFF';
+  }
+}
+missileBtnEl.addEventListener('touchstart', toggleMissile, { passive: false });
+missileBtnEl.addEventListener('click', toggleMissile);
 
-// スタート・リトライ（二重呼び出し防止）
+// スタート（二重呼び出し防止）
 let startGameLock = false;
 function safeStartGame(e) {
   if (e) e.preventDefault();
@@ -298,9 +296,7 @@ function safeStartGame(e) {
   setTimeout(() => { startGameLock = false; }, 300);
 }
 document.getElementById('startBtn').addEventListener('click', safeStartGame);
-document.getElementById('retryBtn').addEventListener('click', safeStartGame);
 document.getElementById('startBtn').addEventListener('touchend', safeStartGame);
-document.getElementById('retryBtn').addEventListener('touchend', safeStartGame);
 
 // プレイヤー
 let player = null;
@@ -348,8 +344,8 @@ function startGame() {
   Object.keys(keys).forEach(k => { keys[k] = false; });
   touchMove = { active: false, prevX: 0, prevY: 0, dx: 0, dy: 0, id: -1 };
   touchMissile = false;
-  missileTouch.id = -1;
   missileBtnEl.classList.remove('active');
+  missileBtnEl.innerHTML = 'MISSILE<br>OFF';
   player = {
     x: W / 2,
     y: H - 100,
@@ -849,6 +845,12 @@ function playerHit() {
     document.getElementById('finalScore').textContent = `SCORE: ${score}`;
     document.getElementById('gameOverScreen').style.display = 'flex';
     player = null;
+    // 4秒後に初期画面に戻る
+    setTimeout(() => {
+      document.getElementById('gameOverScreen').style.display = 'none';
+      document.getElementById('startScreen').style.display = 'flex';
+      gameState = 'title';
+    }, 4000);
   } else {
     player.invincible = 120;
     player.x = W / 2;
