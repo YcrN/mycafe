@@ -150,7 +150,7 @@ canvas {
       ⚠ 後半の敵は熱を出さない…<br>
       照準でロックオンせよ！
     </div>
-    <button class="startBtn" id="startBtn">START</button>
+    <button class="startBtn" id="startBtn">TAP TO START</button>
   </div>
   <div id="gameOverScreen" style="display:none;">
     <h1>GAME OVER</h1>
@@ -226,8 +226,9 @@ function findTouch(touches, id) {
 
 // キャンバス全体でタッチ移動を受け付ける
 canvas.addEventListener('touchstart', e => {
-  e.preventDefault();
+  // プレイ中でなければcanvasのタッチを無視（STARTボタン等を阻害しない）
   if (gameState !== 'playing') return;
+  e.preventDefault();
   // まだ移動タッチが始まってなければ開始
   if (!touchMove.active) {
     const t = e.changedTouches[0];
@@ -237,6 +238,7 @@ canvas.addEventListener('touchstart', e => {
 }, { passive: false });
 
 canvas.addEventListener('touchmove', e => {
+  if (gameState !== 'playing') return;
   e.preventDefault();
   if (!touchMove.active) return;
   const t = findTouch(e.touches, touchMove.id);
@@ -250,7 +252,6 @@ canvas.addEventListener('touchmove', e => {
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
-  e.preventDefault();
   for (let i = 0; i < e.changedTouches.length; i++) {
     if (e.changedTouches[i].identifier === touchMove.id) {
       touchMove.active = false;
@@ -261,7 +262,7 @@ canvas.addEventListener('touchend', e => {
   }
 }, { passive: false });
 
-canvas.addEventListener('touchcancel', e => {
+canvas.addEventListener('touchcancel', () => {
   touchMove.active = false;
   touchMove.dx = 0;
   touchMove.dy = 0;
@@ -286,17 +287,28 @@ function toggleMissile(e) {
 missileBtnEl.addEventListener('touchstart', toggleMissile, { passive: false });
 missileBtnEl.addEventListener('click', toggleMissile);
 
-// スタート（二重呼び出し防止）
+// スタート（画面全体タップで開始・二重呼び出し防止）
 let startGameLock = false;
-function safeStartGame(e) {
-  if (e) e.preventDefault();
+function safeStartGame() {
+  if (gameState !== 'title') return;
   if (startGameLock) return;
   startGameLock = true;
   startGame();
-  setTimeout(() => { startGameLock = false; }, 300);
+  setTimeout(() => { startGameLock = false; }, 500);
 }
-document.getElementById('startBtn').addEventListener('click', safeStartGame);
-document.getElementById('startBtn').addEventListener('touchend', safeStartGame);
+// ボタンクリック（PC）
+document.getElementById('startBtn').addEventListener('click', e => {
+  e.preventDefault();
+  safeStartGame();
+});
+// スタート画面全体のタップ（モバイル確実対応）
+document.getElementById('startScreen').addEventListener('touchend', e => {
+  e.preventDefault();
+  safeStartGame();
+});
+document.getElementById('startScreen').addEventListener('click', e => {
+  safeStartGame();
+});
 
 // プレイヤー
 let player = null;
@@ -346,6 +358,7 @@ function startGame() {
   touchMissile = false;
   missileBtnEl.classList.remove('active');
   missileBtnEl.innerHTML = 'MISSILE<br>OFF';
+  tubeIndex = 0;
   player = {
     x: W / 2,
     y: H - 100,
@@ -407,31 +420,57 @@ function spawnMissileTrail(x, y) {
   });
 }
 
-// ミサイル発射（マクロス式：多数同時発射）
-function fireMissiles() {
+// ミサイル発射口（左右4門ずつ、計8門）
+// tubeIndex: 現在の発射口番号（0〜7を順番に回す）
+// 各門ごとに直進距離が異なる（前方の門ほど短く、後方ほど長い）
+const missileTubes = [
+  // 左側4門（前から順に）
+  { side: -1, offsetX: -16, offsetY: -8,  spreadAngle: -0.5, straightFrames: 8  },
+  { side: -1, offsetX: -20, offsetY: -2,  spreadAngle: -0.7, straightFrames: 16 },
+  { side: -1, offsetX: -22, offsetY: 4,   spreadAngle: -0.9, straightFrames: 24 },
+  { side: -1, offsetX: -20, offsetY: 10,  spreadAngle: -1.1, straightFrames: 32 },
+  // 右側4門（前から順に）
+  { side:  1, offsetX: 16,  offsetY: -8,  spreadAngle: 0.5,  straightFrames: 8  },
+  { side:  1, offsetX: 20,  offsetY: -2,  spreadAngle: 0.7,  straightFrames: 16 },
+  { side:  1, offsetX: 22,  offsetY: 4,   spreadAngle: 0.9,  straightFrames: 24 },
+  { side:  1, offsetX: 20,  offsetY: 10,  spreadAngle: 1.1,  straightFrames: 32 },
+];
+let tubeIndex = 0;
+
+// ミサイル1発発射（順番に発射口から）
+function fireSingleMissile() {
   if (!player) return;
+  const tube = missileTubes[tubeIndex];
+  tubeIndex = (tubeIndex + 1) % missileTubes.length;
+
   const targets = [...player.lockedEnemies];
-  const missileCount = Math.min(6, 2 + Math.floor(stage / 2));
+  const target = targets.length > 0 ? targets[tubeIndex % targets.length] : null;
 
-  for (let i = 0; i < missileCount; i++) {
-    const offsetX = (i - (missileCount - 1) / 2) * 12;
-    const spreadAngle = (i - (missileCount - 1) / 2) * 0.3;
-    const target = targets.length > 0 ? targets[i % targets.length] : null;
+  // 発射方向：横に広がってから上昇
+  const launchAngle = -Math.PI / 2 + tube.spreadAngle;
+  const launchSpeed = 8;
 
-    missiles.push({
-      x: player.x + offsetX,
-      y: player.y - 10,
-      vx: Math.sin(spreadAngle) * 4,
-      vy: -6,
-      speed: 7,
-      turnRate: 0.12,
-      target: target,
-      heatSeeking: target === null,
-      life: 180,
-      damage: 2,
-      trail: []
-    });
-  }
+  missiles.push({
+    x: player.x + tube.offsetX,
+    y: player.y + tube.offsetY,
+    vx: Math.cos(launchAngle) * launchSpeed,
+    vy: Math.sin(launchAngle) * launchSpeed,
+    speed: 8,
+    turnRate: 0.15,
+    target: target,
+    heatSeeking: target === null,
+    life: 200,
+    damage: 2,
+    straightFrames: tube.straightFrames,  // この間は直進（追尾しない）
+    age: 0
+  });
+
+  // 発射エフェクト
+  spawnExplosion(
+    player.x + tube.offsetX,
+    player.y + tube.offsetY,
+    3, '#ff4400', 2, 8
+  );
 }
 
 // バルカン発射
@@ -589,15 +628,15 @@ function update() {
       player.vulcanTimer = 0;
     }
 
-    // ミサイル発射
+    // ミサイル発射（順番に1発ずつ高速連射）
     if (keys['z'] || keys[' '] || touchMissile) {
       player.missileTimer++;
-      if (player.missileTimer >= 10) {
-        fireMissiles();
+      if (player.missileTimer >= 4) {
+        fireSingleMissile();
         player.missileTimer = 0;
       }
     } else {
-      player.missileTimer = 8; // すぐ撃てるように
+      player.missileTimer = 3; // すぐ撃てるように
     }
   }
 
@@ -627,53 +666,66 @@ function update() {
   // ミサイル更新
   missiles = missiles.filter(m => {
     m.life--;
+    m.age++;
     if (m.life <= 0) {
       spawnExplosion(m.x, m.y, 5, '#ff8800', 2, 15);
       return false;
     }
 
-    // ターゲット追尾
-    let target = m.target;
-
-    // ターゲットが死んでたら解除
-    if (target && (target.hp <= 0 || target.y > H + 50)) {
-      m.target = null;
-      target = null;
-    }
-
-    // 熱感知自動追尾（ターゲットなしの場合）
-    if (!target && m.heatSeeking) {
-      let closestDist = 300;
-      enemies.forEach(e => {
-        if (e.emitsHeat && e.hp > 0) {
-          const d = dist(m, e);
-          if (d < closestDist) {
-            closestDist = d;
-            target = e;
-          }
-        }
-      });
-      if (target) {
-        m.target = target;
-        m.heatSeeking = false;
-      }
-    }
-
-    if (target && target.hp > 0) {
-      // 追尾旋回
-      const desired = angleTo(m, target);
-      const current = Math.atan2(m.vy, m.vx);
-      let diff = desired - current;
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-      const turn = Math.sign(diff) * Math.min(Math.abs(diff), m.turnRate);
-      const newAngle = current + turn;
-      m.vx = Math.cos(newAngle) * m.speed;
-      m.vy = Math.sin(newAngle) * m.speed;
+    // 直進フェーズ中は追尾しない
+    if (m.age <= m.straightFrames) {
+      // そのまま直進（発射方向に飛ぶ）
     } else {
-      // ターゲットなし：まっすぐ上に加速
-      m.vy -= 0.1;
-      if (m.vy < -m.speed) m.vy = -m.speed;
+      // 追尾フェーズ
+      let target = m.target;
+
+      // ターゲットが死んでたら解除
+      if (target && (target.hp <= 0 || target.y > H + 50)) {
+        m.target = null;
+        target = null;
+      }
+
+      // 熱感知自動追尾（ターゲットなしの場合）
+      if (!target && m.heatSeeking) {
+        let closestDist = 300;
+        enemies.forEach(e => {
+          if (e.emitsHeat && e.hp > 0) {
+            const d = dist(m, e);
+            if (d < closestDist) {
+              closestDist = d;
+              target = e;
+            }
+          }
+        });
+        if (target) {
+          m.target = target;
+          m.heatSeeking = false;
+        }
+      }
+
+      if (target && target.hp > 0) {
+        // 追尾旋回
+        const desired = angleTo(m, target);
+        const current = Math.atan2(m.vy, m.vx);
+        let diff = desired - current;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        const turn = Math.sign(diff) * Math.min(Math.abs(diff), m.turnRate);
+        const newAngle = current + turn;
+        m.vx = Math.cos(newAngle) * m.speed;
+        m.vy = Math.sin(newAngle) * m.speed;
+      } else {
+        // ターゲットなし：まっすぐ上に加速
+        const current = Math.atan2(m.vy, m.vx);
+        const upward = -Math.PI / 2;
+        let diff = upward - current;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        const turn = Math.sign(diff) * Math.min(Math.abs(diff), 0.08);
+        const newAngle = current + turn;
+        m.vx = Math.cos(newAngle) * m.speed;
+        m.vy = Math.sin(newAngle) * m.speed;
+      }
     }
 
     m.x += m.vx;
@@ -1041,14 +1093,25 @@ function draw() {
     ctx.closePath();
     ctx.fill();
 
+    // ミサイルポッド（左右）
+    ctx.fillStyle = '#678';
+    ctx.fillRect(player.x - 24, player.y - 6, 8, 16);
+    ctx.fillRect(player.x + 16, player.y - 6, 8, 16);
+    // ポッドの発射口ドット
+    ctx.fillStyle = '#f80';
+    for (let i = 0; i < 4; i++) {
+      ctx.fillRect(player.x - 24, player.y - 6 + i * 4, 2, 2);
+      ctx.fillRect(player.x + 22, player.y - 6 + i * 4, 2, 2);
+    }
+
     // 機体
     ctx.fillStyle = '#0cf';
     ctx.beginPath();
     ctx.moveTo(player.x, player.y - 14);
-    ctx.lineTo(player.x + 12, player.y + 10);
+    ctx.lineTo(player.x + 14, player.y + 10);
     ctx.lineTo(player.x + 5, player.y + 14);
     ctx.lineTo(player.x - 5, player.y + 14);
-    ctx.lineTo(player.x - 12, player.y + 10);
+    ctx.lineTo(player.x - 14, player.y + 10);
     ctx.closePath();
     ctx.fill();
 
