@@ -430,15 +430,15 @@ function spawnMissileTrail(x, y) {
 // 各門ごとに直進距離が異なる（前方の門ほど短く、後方ほど長い）
 const missileTubes = [
   // 左側4門（前から順に）
-  { side: -1, offsetX: -16, offsetY: -8,  spreadAngle: -0.5, straightFrames: 2 },
-  { side: -1, offsetX: -20, offsetY: -2,  spreadAngle: -0.7, straightFrames: 4 },
-  { side: -1, offsetX: -22, offsetY: 4,   spreadAngle: -0.9, straightFrames: 6 },
-  { side: -1, offsetX: -20, offsetY: 10,  spreadAngle: -1.1, straightFrames: 8 },
+  { side: -1, offsetX: -16, offsetY: -8,  spreadAngle: -0.5, straightFrames: 1 },
+  { side: -1, offsetX: -20, offsetY: -2,  spreadAngle: -0.7, straightFrames: 2 },
+  { side: -1, offsetX: -22, offsetY: 4,   spreadAngle: -0.9, straightFrames: 3 },
+  { side: -1, offsetX: -20, offsetY: 10,  spreadAngle: -1.1, straightFrames: 4 },
   // 右側4門（前から順に）
-  { side:  1, offsetX: 16,  offsetY: -8,  spreadAngle: 0.5,  straightFrames: 2 },
-  { side:  1, offsetX: 20,  offsetY: -2,  spreadAngle: 0.7,  straightFrames: 4 },
-  { side:  1, offsetX: 22,  offsetY: 4,   spreadAngle: 0.9,  straightFrames: 6 },
-  { side:  1, offsetX: 20,  offsetY: 10,  spreadAngle: 1.1,  straightFrames: 8 },
+  { side:  1, offsetX: 16,  offsetY: -8,  spreadAngle: 0.5,  straightFrames: 1 },
+  { side:  1, offsetX: 20,  offsetY: -2,  spreadAngle: 0.7,  straightFrames: 2 },
+  { side:  1, offsetX: 22,  offsetY: 4,   spreadAngle: 0.9,  straightFrames: 3 },
+  { side:  1, offsetX: 20,  offsetY: 10,  spreadAngle: 1.1,  straightFrames: 4 },
 ];
 let tubeIndex = 0;
 
@@ -525,23 +525,21 @@ const enemyTypes = {
     color: '#f0f', shootTimer: 40 + Math.random() * 40,
     pattern: 'heavy'
   }),
-  // ステルス：熱なし！追尾不可
+  // ステルス：熱なし！追尾不可（目視はできる）
   stealth: (x, y) => ({
     x, y, w: 22, h: 22, hp: 4, maxHp: 4, type: 'stealth',
     speed: 2, emitsHeat: false, score: 300,
     vx: 0, vy: 2, timer: 0,
-    color: '#448', shootTimer: 50 + Math.random() * 80,
-    pattern: 'stealth',
-    alpha: 0.4
+    color: '#88aaff', shootTimer: 50 + Math.random() * 80,
+    pattern: 'stealth'
   }),
-  // ステルス大型：熱なし、硬い、高速
+  // ステルス大型：熱なし、硬い、高速（目視はできる）
   stealthHeavy: (x, y) => ({
     x, y, w: 32, h: 32, hp: 20, maxHp: 20, type: 'stealthHeavy',
     speed: 1.2, emitsHeat: false, score: 800,
     vx: 0, vy: 1, timer: 0,
-    color: '#226', shootTimer: 30 + Math.random() * 30,
-    pattern: 'stealthHeavy',
-    alpha: 0.5
+    color: '#6688dd', shootTimer: 30 + Math.random() * 30,
+    pattern: 'stealthHeavy'
   })
 };
 
@@ -764,7 +762,6 @@ function update() {
         e.timer++;
         e.x += Math.sin(e.timer * 0.08) * 3;
         e.y += e.vy * difficulty;
-        e.alpha = 0.25 + Math.sin(e.timer * 0.1) * 0.15;
         break;
       case 'stealthHeavy':
         e.timer++;
@@ -774,7 +771,6 @@ function update() {
           e.x += Math.sign(dx) * 0.5;
         }
         e.y += e.vy * difficulty;
-        e.alpha = 0.3 + Math.sin(e.timer * 0.08) * 0.2;
         break;
     }
 
@@ -978,7 +974,7 @@ function draw() {
     ctx.stroke();
   }
 
-  // 敵描画
+  // 敵描画（ゼビウス風）
   enemies.forEach(e => {
     ctx.save();
     ctx.globalAlpha = e.alpha || 1;
@@ -993,37 +989,138 @@ function draw() {
       ctx.fillRect(e.x - barW / 2, e.y - e.h / 2 - 8, barW * hpRatio, 3);
     }
 
-    // 敵本体
-    ctx.fillStyle = e.color;
     if (e.type === 'heavy' || e.type === 'stealthHeavy') {
-      // 六角形
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const a = (Math.PI / 3) * i - Math.PI / 2;
-        const r = e.w / 2;
-        ctx.lineTo(e.x + Math.cos(a) * r, e.y + Math.sin(a) * r);
+      // アンドアジェネシス風（大型円盤＋コア）
+      const r = e.w / 2;
+      // 外殻（メタリック円盤）
+      const grad = ctx.createRadialGradient(e.x, e.y, r * 0.2, e.x, e.y, r);
+      if (e.type === 'stealthHeavy') {
+        grad.addColorStop(0, '#aabbee');
+        grad.addColorStop(0.5, '#6688dd');
+        grad.addColorStop(1, '#334488');
+      } else {
+        grad.addColorStop(0, '#ff88cc');
+        grad.addColorStop(0.5, '#cc44aa');
+        grad.addColorStop(1, '#662266');
       }
-      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(e.x, e.y, r, r * 0.6, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#fff';
+      // リム
+      ctx.strokeStyle = e.type === 'stealthHeavy' ? '#99bbff' : '#ffaadd';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(e.x, e.y, r, r * 0.6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      // コア
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, r * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      // コアの光
+      ctx.fillStyle = e.type === 'stealthHeavy' ? '#88ccff' : '#ff4488';
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, r * 0.15, 0, Math.PI * 2);
+      ctx.fill();
+      // 装甲パネルライン
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
       ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(e.x - r * 0.7, e.y);
+      ctx.lineTo(e.x - r * 0.25, e.y);
+      ctx.moveTo(e.x + r * 0.25, e.y);
+      ctx.lineTo(e.x + r * 0.7, e.y);
       ctx.stroke();
     } else if (e.type === 'stealth') {
-      // ひし形
+      // ザカート風（回転する菱形機体）
+      const r = e.w / 2;
+      const rot = (e.timer || 0) * 0.05;
+      ctx.translate(e.x, e.y);
+      ctx.rotate(rot);
+      // 菱形ボディ
+      const grad = ctx.createLinearGradient(-r, 0, r, 0);
+      grad.addColorStop(0, '#5577cc');
+      grad.addColorStop(0.5, '#aaccff');
+      grad.addColorStop(1, '#5577cc');
+      ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(e.x, e.y - e.h / 2);
-      ctx.lineTo(e.x + e.w / 2, e.y);
-      ctx.lineTo(e.x, e.y + e.h / 2);
-      ctx.lineTo(e.x - e.w / 2, e.y);
+      ctx.moveTo(0, -r);
+      ctx.lineTo(r * 0.7, 0);
+      ctx.lineTo(0, r);
+      ctx.lineTo(-r * 0.7, 0);
       ctx.closePath();
       ctx.fill();
-    } else {
-      // 逆三角形
+      ctx.strokeStyle = '#99ccff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // 中心コア
+      ctx.fillStyle = '#fff';
       ctx.beginPath();
-      ctx.moveTo(e.x - e.w / 2, e.y - e.h / 2);
-      ctx.lineTo(e.x + e.w / 2, e.y - e.h / 2);
-      ctx.lineTo(e.x, e.y + e.h / 2);
+      ctx.arc(0, 0, r * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#44aaff';
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      // シェイク復元
+      if (shakeTimer > 0) {
+        // re-apply will be handled by ctx.restore
+      }
+    } else if (e.type === 'zigzag') {
+      // トーロイド風（回転する円盤＋フチ）
+      const r = e.w / 2;
+      // 円盤
+      const grad = ctx.createRadialGradient(e.x - 2, e.y - 2, 0, e.x, e.y, r);
+      grad.addColorStop(0, '#ffcc44');
+      grad.addColorStop(0.6, '#ff8800');
+      grad.addColorStop(1, '#884400');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      // リング模様
+      ctx.strokeStyle = '#ffdd88';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, r * 0.6, 0, Math.PI * 2);
+      ctx.stroke();
+      // 中心
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, r * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ff4400';
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, r * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // grunt: タルケン風（三角翼機体）
+      const r = e.w / 2;
+      // メインボディ
+      const grad = ctx.createLinearGradient(e.x, e.y - r, e.x, e.y + r);
+      grad.addColorStop(0, '#ff6644');
+      grad.addColorStop(0.5, '#cc3322');
+      grad.addColorStop(1, '#881111');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(e.x, e.y - r);           // 先端
+      ctx.lineTo(e.x + r, e.y + r * 0.6); // 右翼
+      ctx.lineTo(e.x + r * 0.3, e.y + r * 0.4);
+      ctx.lineTo(e.x + r * 0.3, e.y + r); // 右後
+      ctx.lineTo(e.x - r * 0.3, e.y + r); // 左後
+      ctx.lineTo(e.x - r * 0.3, e.y + r * 0.4);
+      ctx.lineTo(e.x - r, e.y + r * 0.6); // 左翼
       ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#ff8866';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // コックピット
+      ctx.fillStyle = '#ffaa44';
+      ctx.beginPath();
+      ctx.ellipse(e.x, e.y, r * 0.15, r * 0.3, 0, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -1032,7 +1129,14 @@ function draw() {
       ctx.strokeStyle = '#0f0';
       ctx.lineWidth = 2;
       const s = e.w / 2 + 8;
-      ctx.strokeRect(e.x - s, e.y - s, s * 2, s * 2);
+      // 四隅のブラケット
+      const bLen = 6;
+      ctx.beginPath();
+      ctx.moveTo(e.x - s, e.y - s + bLen); ctx.lineTo(e.x - s, e.y - s); ctx.lineTo(e.x - s + bLen, e.y - s);
+      ctx.moveTo(e.x + s - bLen, e.y - s); ctx.lineTo(e.x + s, e.y - s); ctx.lineTo(e.x + s, e.y - s + bLen);
+      ctx.moveTo(e.x + s, e.y + s - bLen); ctx.lineTo(e.x + s, e.y + s); ctx.lineTo(e.x + s - bLen, e.y + s);
+      ctx.moveTo(e.x - s + bLen, e.y + s); ctx.lineTo(e.x - s, e.y + s); ctx.lineTo(e.x - s, e.y + s - bLen);
+      ctx.stroke();
       // LOCK表示
       ctx.fillStyle = '#0f0';
       ctx.font = '9px monospace';
@@ -1041,8 +1145,8 @@ function draw() {
 
     // 熱源表示（emitsHeatの敵のみ）
     if (e.emitsHeat) {
-      ctx.globalAlpha = 0.3 + Math.sin(Date.now() * 0.01) * 0.1;
-      ctx.fillStyle = '#f80';
+      ctx.globalAlpha = 0.15 + Math.sin(Date.now() * 0.01) * 0.08;
+      ctx.fillStyle = '#ff8800';
       ctx.beginPath();
       ctx.arc(e.x, e.y, e.w / 2 + 6, 0, Math.PI * 2);
       ctx.fill();
@@ -1091,47 +1195,126 @@ function draw() {
   });
   ctx.globalAlpha = 1;
 
-  // プレイヤー描画
+  // プレイヤー描画（ソルバルウ風）
   if (player) {
     ctx.save();
     if (player.invincible > 0 && Math.floor(player.invincible / 4) % 2) {
       ctx.globalAlpha = 0.3;
     }
 
-    // エンジン炎
-    ctx.fillStyle = '#08f';
+    const px = player.x;
+    const py = player.y;
+
+    // エンジン炎（2基）
+    const flameLen = 8 + Math.random() * 10;
+    ctx.fillStyle = '#4488ff';
     ctx.beginPath();
-    ctx.moveTo(player.x - 6, player.y + 14);
-    ctx.lineTo(player.x, player.y + 22 + Math.random() * 8);
-    ctx.lineTo(player.x + 6, player.y + 14);
+    ctx.moveTo(px - 5, py + 12);
+    ctx.lineTo(px - 3, py + 12 + flameLen);
+    ctx.lineTo(px - 1, py + 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(px + 1, py + 12);
+    ctx.lineTo(px + 3, py + 12 + flameLen);
+    ctx.lineTo(px + 5, py + 12);
+    ctx.closePath();
+    ctx.fill();
+    // 炎コア
+    ctx.fillStyle = '#aaddff';
+    ctx.beginPath();
+    ctx.moveTo(px - 4, py + 12);
+    ctx.lineTo(px - 3, py + 12 + flameLen * 0.6);
+    ctx.lineTo(px - 2, py + 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(px + 2, py + 12);
+    ctx.lineTo(px + 3, py + 12 + flameLen * 0.6);
+    ctx.lineTo(px + 4, py + 12);
     ctx.closePath();
     ctx.fill();
 
-    // ミサイルポッド（左右）
-    ctx.fillStyle = '#678';
-    ctx.fillRect(player.x - 24, player.y - 6, 8, 16);
-    ctx.fillRect(player.x + 16, player.y - 6, 8, 16);
-    // ポッドの発射口ドット
-    ctx.fillStyle = '#f80';
-    for (let i = 0; i < 4; i++) {
-      ctx.fillRect(player.x - 24, player.y - 6 + i * 4, 2, 2);
-      ctx.fillRect(player.x + 22, player.y - 6 + i * 4, 2, 2);
-    }
-
-    // 機体
-    ctx.fillStyle = '#0cf';
+    // ミサイルポッド（左右ナセル）
+    ctx.fillStyle = '#556677';
+    // 左ナセル
     ctx.beginPath();
-    ctx.moveTo(player.x, player.y - 14);
-    ctx.lineTo(player.x + 14, player.y + 10);
-    ctx.lineTo(player.x + 5, player.y + 14);
-    ctx.lineTo(player.x - 5, player.y + 14);
-    ctx.lineTo(player.x - 14, player.y + 10);
+    ctx.moveTo(px - 18, py - 2);
+    ctx.lineTo(px - 14, py - 6);
+    ctx.lineTo(px - 12, py - 6);
+    ctx.lineTo(px - 12, py + 10);
+    ctx.lineTo(px - 18, py + 8);
     ctx.closePath();
     ctx.fill();
+    // 右ナセル
+    ctx.beginPath();
+    ctx.moveTo(px + 18, py - 2);
+    ctx.lineTo(px + 14, py - 6);
+    ctx.lineTo(px + 12, py - 6);
+    ctx.lineTo(px + 12, py + 10);
+    ctx.lineTo(px + 18, py + 8);
+    ctx.closePath();
+    ctx.fill();
+    // ナセルライト
+    ctx.fillStyle = '#ff6644';
+    ctx.fillRect(px - 18, py - 1, 2, 2);
+    ctx.fillRect(px + 16, py - 1, 2, 2);
 
-    // コックピット
-    ctx.fillStyle = '#0ff';
-    ctx.fillRect(player.x - 2, player.y - 4, 4, 6);
+    // メインボディ（ソルバルウの流線型）
+    const bodyGrad = ctx.createLinearGradient(px, py - 16, px, py + 14);
+    bodyGrad.addColorStop(0, '#ccddee');
+    bodyGrad.addColorStop(0.3, '#8899bb');
+    bodyGrad.addColorStop(0.6, '#667799');
+    bodyGrad.addColorStop(1, '#445566');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.moveTo(px, py - 16);           // ノーズ
+    ctx.lineTo(px + 6, py - 8);        // 右肩
+    ctx.lineTo(px + 18, py + 2);       // 右翼端
+    ctx.lineTo(px + 16, py + 6);       // 右翼後
+    ctx.lineTo(px + 8, py + 4);        // 右翼付け根
+    ctx.lineTo(px + 6, py + 14);       // 右後
+    ctx.lineTo(px - 6, py + 14);       // 左後
+    ctx.lineTo(px - 8, py + 4);        // 左翼付け根
+    ctx.lineTo(px - 16, py + 6);       // 左翼後
+    ctx.lineTo(px - 18, py + 2);       // 左翼端
+    ctx.lineTo(px - 6, py - 8);        // 左肩
+    ctx.closePath();
+    ctx.fill();
+    // ボディのアウトライン
+    ctx.strokeStyle = '#aabbcc';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 中央ライン
+    ctx.strokeStyle = 'rgba(200, 220, 240, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(px, py - 14);
+    ctx.lineTo(px, py + 12);
+    ctx.stroke();
+
+    // コックピット（キャノピー）
+    const cockpitGrad = ctx.createLinearGradient(px, py - 8, px, py + 2);
+    cockpitGrad.addColorStop(0, '#88eeff');
+    cockpitGrad.addColorStop(1, '#226688');
+    ctx.fillStyle = cockpitGrad;
+    ctx.beginPath();
+    ctx.ellipse(px, py - 3, 3, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#aaeeff';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    // 翼端ライト
+    ctx.fillStyle = '#00ff88';
+    ctx.beginPath();
+    ctx.arc(px - 17, py + 3, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ff4444';
+    ctx.beginPath();
+    ctx.arc(px + 17, py + 3, 1.5, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.restore();
   }
