@@ -340,6 +340,11 @@ function initStars() {
 }
 
 function startGame() {
+  // 前回のゲームオーバータイマーが残っていたらキャンセル
+  if (gameOverTimerId !== null) {
+    clearTimeout(gameOverTimerId);
+    gameOverTimerId = null;
+  }
   document.getElementById('startScreen').style.display = 'none';
   document.getElementById('gameOverScreen').style.display = 'none';
   gameState = 'playing';
@@ -845,23 +850,28 @@ function update() {
     });
   });
 
-  // 衝突判定：敵弾 vs プレイヤー
-  if (player && player.invincible <= 0) {
+  // 衝突判定：敵弾 vs プレイヤー（1フレームで1回だけ被弾）
+  if (player && player.invincible <= 0 && gameState === 'playing') {
+    let wasHit = false;
     enemyBullets.forEach(b => {
-      if (Math.abs(b.x - player.x) < 8 && Math.abs(b.y - player.y) < 8) {
+      if (!wasHit && player && Math.abs(b.x - player.x) < 8 && Math.abs(b.y - player.y) < 8) {
         b.y = H + 100;
         playerHit();
+        wasHit = true;
       }
     });
 
     // 衝突判定：敵 vs プレイヤー
-    enemies.forEach(e => {
-      if (Math.abs(e.x - player.x) < (e.w / 2 + player.w / 2 - 4) &&
-          Math.abs(e.y - player.y) < (e.h / 2 + player.h / 2 - 4)) {
-        e.hp -= 5;
-        playerHit();
-      }
-    });
+    if (!wasHit && player) {
+      enemies.forEach(e => {
+        if (!wasHit && player && Math.abs(e.x - player.x) < (e.w / 2 + player.w / 2 - 4) &&
+            Math.abs(e.y - player.y) < (e.h / 2 + player.h / 2 - 4)) {
+          e.hp -= 5;
+          playerHit();
+          wasHit = true;
+        }
+      });
+    }
   }
 
   // パーティクル更新
@@ -884,8 +894,11 @@ function update() {
   document.getElementById('livesDisplay').textContent = `LIVES: ${lives}`;
 }
 
+let gameOverTimerId = null;
+
 function playerHit() {
   if (!player) return;
+  if (gameState !== 'playing') return;
   lives--;
   spawnExplosion(player.x, player.y, 30, '#0ff', 5, 40);
   spawnExplosion(player.x, player.y, 20, '#fff', 4, 30);
@@ -898,7 +911,8 @@ function playerHit() {
     document.getElementById('gameOverScreen').style.display = 'flex';
     player = null;
     // 4秒後に初期画面に戻る
-    setTimeout(() => {
+    gameOverTimerId = setTimeout(() => {
+      gameOverTimerId = null;
       document.getElementById('gameOverScreen').style.display = 'none';
       document.getElementById('startScreen').style.display = 'flex';
       gameState = 'title';
