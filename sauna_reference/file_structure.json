@@ -1,0 +1,81 @@
+{
+  "base_path": "/fpsaunayoyaku.com/public_html",
+  "structure": {
+    "wp-config.php": {
+      "path": "wp-config.php",
+      "description": "WordPress設定ファイル（DB接続、Stripe APIキー等）"
+    },
+    "theme": {
+      "base": "wp-content/themes/blocksy-child",
+      "files": {
+        "functions.php": {
+          "path": "wp-content/themes/blocksy-child/functions.php",
+          "description": "子テーマのfunctions.php（カスタムフック、ショートコード登録等）"
+        },
+        "style.css": {
+          "path": "wp-content/themes/blocksy-child/style.css",
+          "description": "子テーマのスタイルシート"
+        }
+      }
+    },
+    "custom_plugin": {
+      "base": "wp-content/plugins/fps-booking-core",
+      "files": {
+        "fps-booking-core.php": {
+          "path": "wp-content/plugins/fps-booking-core/fps-booking-core.php",
+          "description": "プラグインメインファイル（予約ロジック、WooCommerce連携、Bookly連携）"
+        },
+        "fps-sauna-admin.php": {
+          "path": "wp-content/plugins/fps-booking-core/admin/fps-sauna-admin.php",
+          "description": "管理画面用設定ページ"
+        },
+        "fps-line.php": {
+          "path": "wp-content/plugins/fps-booking-core/includes/fps-line.php",
+          "description": "LINE通知連携機能"
+        },
+        "bookly-grid.v2.js": {
+          "path": "wp-content/plugins/fps-booking-core/assets/js/bookly-grid.v2.js",
+          "description": "予約グリッドUI（フロントエンド JavaScript）"
+        },
+        "bookly-grid.v2.css": {
+          "path": "wp-content/plugins/fps-booking-core/assets/css/bookly-grid.v2.css",
+          "description": "予約グリッドUIスタイル"
+        }
+      }
+    },
+    "mu_plugins": {
+      "base": "wp-content/mu-plugins",
+      "description": "Must-Use プラグイン（自動読み込み）",
+      "files": {
+        "fps-bookly-busy-endpoint.php": {
+          "path": "wp-content/mu-plugins/fps-bookly-busy-endpoint.php",
+          "description": "Bookly予約済み時間帯を取得するREST APIエンドポイント"
+        },
+        "fps-design-common.php": {
+          "path": "wp-content/mu-plugins/fps-design-common.php",
+          "description": "サイト全体の共通デザインカスタマイズ"
+        },
+        "fps-design-levels.php": {
+          "path": "wp-content/mu-plugins/fps-design-levels.php",
+          "description": "会員レベル（一般/VIP）別のUI表示制御"
+        },
+        "fps-design-account.php": {
+          "path": "wp-content/mu-plugins/fps-design-account.php",
+          "description": "マイアカウントページのデザインカスタマイズ"
+        },
+        "fps-design-booking.php": {
+          "path": "wp-content/mu-plugins/fps-design-booking.php",
+          "description": "予約ページのデザインカスタマイズ"
+        },
+        "fps-design-checkout.php": {
+          "path": "wp-content/mu-plugins/fps-design-checkout.php",
+          "description": "チェックアウト（支払い）ページのデザインカスタマイズ"
+        },
+        "fps-design-header-footer.php": {
+          "path": "wp-content/mu-plugins/fps-design-header-footer.php",
+          "description": "サイトヘッダー・フッターのデザインカスタマイズ"
+        }
+      }
+    }
+  }
+}

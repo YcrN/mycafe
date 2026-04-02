@@ -1,0 +1,103 @@
+{
+  "wordpress": {
+    "theme": {
+      "parent": "blocksy",
+      "child": "blocksy-child"
+    },
+    "plugins": {
+      "booking": {
+        "name": "Bookly Pro",
+        "purpose": "予約データベース管理",
+        "config": {
+          "staff": [
+            { "id": 2, "name": "座禅棟" },
+            { "id": 3, "name": "瞑想棟" },
+            { "id": 4, "name": "翠嵐棟" }
+          ],
+          "services": [
+            { "id": 1, "name": "60分（平日）", "duration": 60, "day_type": "weekday" },
+            { "id": 2, "name": "60分（土日祝）", "duration": 60, "day_type": "weekend_holiday" },
+            { "id": 3, "name": "90分（平日）", "duration": 90, "day_type": "weekday" },
+            { "id": 4, "name": "90分（土日祝）", "duration": 90, "day_type": "weekend_holiday" },
+            { "id": 5, "name": "120分（平日）", "duration": 120, "day_type": "weekday" },
+            { "id": 6, "name": "120分（土日祝）", "duration": 120, "day_type": "weekend_holiday" }
+          ]
+        }
+      },
+      "payment": {
+        "name": "WooCommerce",
+        "purpose": "支払い処理",
+        "payment_gateway": "Stripe"
+      },
+      "membership": {
+        "name": "Paid Memberships Pro",
+        "purpose": "会員管理",
+        "levels": {
+          "general": {
+            "label": "一般会員",
+            "fee": 0
+          },
+          "vip": {
+            "label": "VIP会員",
+            "enrollment_fee": 22000,
+            "monthly_fee": 55000,
+            "benefits": [
+              "120分回数券 6枚/月",
+              "お水無料",
+              "レンタルタオル無料"
+            ]
+          }
+        }
+      },
+      "line_integration": {
+        "name": "Nextend Social Login Standard",
+        "purpose": "LINE連携（ログイン・通知）"
+      },
+      "google_calendar": {
+        "method": "Google Apps Script",
+        "purpose": "予約情報をGoogleカレンダーに送信"
+      }
+    },
+    "custom_plugin": {
+      "name": "fps-booking-core",
+      "purpose": "サウナ予約システムのコアロジック",
+      "components": {
+        "main": "fps-booking-core.php",
+        "admin": "admin/fps-sauna-admin.php",
+        "line": "includes/fps-line.php",
+        "js": "assets/js/bookly-grid.v2.js",
+        "css": "assets/css/bookly-grid.v2.css"
+      }
+    },
+    "mu_plugins": [
+      {
+        "file": "fps-bookly-busy-endpoint.php",
+        "purpose": "Bookly予約済み時間帯取得用APIエンドポイント"
+      },
+      {
+        "file": "fps-design-common.php",
+        "purpose": "共通デザイン設定"
+      },
+      {
+        "file": "fps-design-levels.php",
+        "purpose": "会員レベル別デザイン"
+      },
+      {
+        "file": "fps-design-account.php",
+        "purpose": "アカウントページデザイン"
+      },
+      {
+        "file": "fps-design-booking.php",
+        "purpose": "予約ページデザイン"
+      },
+      {
+        "file": "fps-design-checkout.php",
+        "purpose": "チェックアウトページデザイン"
+      },
+      {
+        "file": "fps-design-header-footer.php",
+        "purpose": "ヘッダー・フッターデザイン"
+      }
+    ]
+  }
+}
