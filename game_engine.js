@@ -14,6 +14,7 @@ const cv = document.getElementById('c');
 cv.width = COLS * T;
 cv.height = ROWS * T;
 const ctx = cv.getContext('2d');
+ctx.imageSmoothingEnabled = false;
 
 // --- 画面リサイズ ---
 function resizeCanvas() {
@@ -34,6 +35,9 @@ const G = {
   player: { x: 0, y: 0, dir: 0, moving: false, step: 0, dx: 0, dy: 0, anim: 0 },
   camera: { x: 0, y: 0, px: 0, py: 0 },
   money: 500,
+  earned: 500,
+  items: {},
+  menu: { sel: 0 },
   flags: {},
   npcs: [],
   dialog: { lines: [], idx: 0, charIdx: 0, timer: 0, done: false, cb: null, speaker: '' },
@@ -103,6 +107,16 @@ setupMobile();
 function consumeAction() {
   if (keys.action) { keys.action = false; keyDown['Space'] = false; keyDown['Enter'] = false; keyDown['KeyZ'] = false; return true; }
   return false;
+}
+function consumeCancel() {
+  if (keys.cancel) { keys.cancel = false; keyDown['KeyX'] = false; keyDown['Escape'] = false; return true; }
+  return false;
+}
+
+// --- お金加算（獲得総額も記録） ---
+function addMoney(n) {
+  G.money += n;
+  if (n > 0) G.earned += n;
 }
 
 // --- カメラ ---
@@ -191,6 +205,15 @@ function checkTransitions() {
   if (!m.transitions) return;
   for (const tr of m.transitions) {
     if (G.player.x === tr.x && G.player.y === tr.y) {
+      // 洞窟の奥はランタンがないと進めない
+      if (tr.map === 'cave2' && !hasItem('lantern')) {
+        showDialog([
+          'ハナ「この先は 真っ暗だ...」',
+          'ハナ「明かりがないと とても進めそうにない」',
+          '＊ どこかに 明かりを見つけよう。',
+        ]);
+        return;
+      }
       fadeToMap(tr.map, tr.px, tr.py, tr.dir);
       return;
     }
@@ -229,8 +252,14 @@ function interact() {
     }
   }
 
-  // 看板
+  // 宝箱
   const tile = getTile(tx, ty);
+  if (tile === 'x' || tile === 'X') {
+    openChest(tx, ty);
+    return;
+  }
+
+  // 看板
   if (tile === 's') {
     checkSignEvents(tx, ty);
   }

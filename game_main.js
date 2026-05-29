@@ -63,7 +63,7 @@ function drawNPCs() {
     const sx = npc.x * T - camX;
     const sy = npc.y * T - camY;
     if (sx < -T || sx > COLS * T || sy < -T || sy > ROWS * T) continue;
-    drawCharSprite(ctx, sx, sy, npc.hair, npc.outfit, npc.dir, npc.small);
+    drawCharSprite(ctx, sx, sy, npc.look, npc.dir, 0);
   }
 }
 
@@ -74,15 +74,14 @@ function drawPlayer() {
   const camY = G.camera.py;
   let px = p.x * T - camX;
   let py = p.y * T - camY;
+  let frame = 0;
   if (p.moving) {
     px += p.dx * T * p.step / MOVE_SPD;
     py += p.dy * T * p.step / MOVE_SPD;
+    // 歩行アニメ（2フレームの足運び）
+    frame = (Math.floor(p.step / (MOVE_SPD / 2)) % 2 === 0) ? 1 : 2;
   }
-  // 歩行アニメ（左右に揺れる）
-  if (p.moving) {
-    py += (p.anim === 0 ? -1 : 1);
-  }
-  drawCharSprite(ctx, px, py, '#884422', '#dd4466', p.dir, false);
+  drawCharSprite(ctx, px, py, PLAYER_LOOK, p.dir, frame);
 }
 
 // --- 描画：UI ---
@@ -111,6 +110,11 @@ function drawUI() {
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('▶ ' + obj, cv.width / 2, cv.height - 7);
+    // もちものヒント
+    ctx.fillStyle = '#88aacc';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('[X/B] もちもの', cv.width - 6, cv.height - 26);
   }
 }
 
@@ -321,7 +325,7 @@ function drawEnding() {
     '夢のパン屋「ひまわりベーカリー」を開いた',
     '',
     '',
-    '使ったお金: ' + formatMoney(1000000000 - G.money + 500),
+    '使ったお金: ' + formatMoney(Math.max(0, G.earned - G.money)),
     '残りのお金: ' + formatMoney(G.money),
     '',
     '',
@@ -369,6 +373,8 @@ function drawEnding() {
       G.state = 'TITLE';
       G.flags = {};
       G.money = 500;
+      G.earned = 500;
+      G.items = {};
     }
   }
 }
@@ -384,12 +390,14 @@ function update() {
         G.fade.cb = () => {
           G.flags = {};
           G.money = 500;
+          G.earned = 500;
+          G.items = {};
           loadMap('home', 4, 3, 0);
           G.fade.dir = -1;
           G.fade.cb = () => {
             G.state = 'EXPLORE';
             G.fade.alpha = 0;
-            showDialog([
+            showChapter(1, 'ひまわり村のハナ', () => showDialog([
               '＊＊＊ ある朝のこと ＊＊＊',
               'ハナは ひまわり村に住む貧しい娘。',
               '病気のお母さんと 小さな家で二人暮らし。',
@@ -400,13 +408,14 @@ function update() {
               'その小さな願いが... 今日、叶おうとしていた。',
               '',
               '＊ お母さんに話しかけてみよう（Spaceキー）',
-            ]);
+            ]));
           };
         };
       }
       break;
 
     case 'EXPLORE':
+      if (consumeCancel()) { openMenu(); break; }
       if (!G.player.moving) {
         if (keys.up) tryMove(0, -1);
         else if (keys.down) tryMove(0, 1);
@@ -416,6 +425,10 @@ function update() {
       }
       updateMovement();
       updateCamera();
+      break;
+
+    case 'MENU':
+      updateMenu();
       break;
 
     case 'DIALOG':
@@ -456,6 +469,7 @@ function draw() {
       drawUI();
       if (G.state === 'DIALOG') drawDialogBox();
       if (G.state === 'CHOICE') drawChoiceBox();
+      if (G.state === 'MENU') drawMenu();
       if (G.state === 'FADE') drawFade();
       break;
   }

@@ -22,21 +22,24 @@ function checkStepEvents() {
   // 初めてワールドマップに出たとき
   if (mapId === 'world' && !f.firstWorld && f.wonLottery) {
     f.firstWorld = true;
-    showDialog([
-      'ハナ「村の外は広いなぁ... にじいろ街は東の方にあるはず」',
-      '＊ 矢印キー（またはWASD）で移動　Spaceキーで話す・調べる',
-      '＊ 東へ進んで にじいろ街を目指そう！',
-    ]);
+    showChapter(2, '広い世界へ', () => showDialog([
+      'ハナ「村の外は 広いなぁ... にじいろ街は 東の方にあるはず」',
+      '＊ 矢印キー（またはWASD）で移動、Spaceキーで 話す・調べる',
+      '＊ [X] または [B] で もちものを 確認できるよ',
+      '＊ 東へ進んで にじいろ街を 目指そう！',
+    ]));
   }
 
   // 初めて にじいろ街に入ったとき
   if (mapId === 'city' && !f.firstCity) {
     f.firstCity = true;
     if (!f.claimedPrize) {
-      showDialog([
+      showChapter(3, 'にじいろ街', () => showDialog([
         'ハナ「わぁ、大きな街！ これが にじいろ街...」',
         '＊ 宝くじセンターを探して 当選金を受け取ろう！',
-      ]);
+      ]));
+    } else {
+      showChapter(3, 'にじいろ街');
     }
   }
 
@@ -56,10 +59,17 @@ function checkStepEvents() {
   // 洞窟に初めて入ったとき
   if (mapId === 'cave' && !f.firstCave && f.heardAboutChild) {
     f.firstCave = true;
-    showDialog([
-      'ハナ「ここが やまびこ洞窟... タケシくんを探さなきゃ！」',
-      '＊ 洞窟の奥へ進んで タケシくんを見つけよう',
-    ]);
+    showChapter(4, 'やまびこ洞窟', () => showDialog([
+      'ハナ「ここが やまびこ洞窟... タケシくんを 探さなきゃ！」',
+      '＊ 洞窟は とても暗い。奥へ進むには 明かりが必要そうだ。',
+      '＊ 宝箱を 調べてみよう。何か 見つかるかも？',
+    ]));
+  }
+
+  // パン屋を開いて初めて入ったとき
+  if (mapId === 'bakery' && f.openedBakery && !f.ch_bakery) {
+    f.ch_bakery = true;
+    showChapter(5, '夢のとびら');
   }
 
   // 洞窟に初めて入ったとき（イベント前）
@@ -94,13 +104,13 @@ function checkStepEvents() {
 function checkSignEvents(x, y) {
   const mapId = G.mapId;
 
-  if (mapId === 'village' && x === 3 && y === 8) {
+  if (mapId === 'village' && x === 2 && y === 8) {
     showDialog(['【看板】 ひまわり村 ～ みんなの笑顔が咲く村 ～']);
   }
   if (mapId === 'city' && x === 7 && y === 3) {
     showDialog(['【看板】 にじいろ街 中央広場']);
   }
-  if (mapId === 'world' && x === 21 && y === 9) {
+  if (mapId === 'world' && x === 20 && y === 9) {
     showDialog(['【看板】 ← 北：にじいろ街　↓ 南：ひまわり村　→ 東：やまびこ洞窟']);
   }
 }
@@ -139,7 +149,10 @@ function getObjective() {
   if (!f.renovatedHouse) return 'お母さんのためにおうちをリフォームしよう';
   if (!f.helpedVillage) return '村長さんに相談してみよう';
   if (!f.heardAboutChild && !f.rescuedChild) return '村の人に話を聞いてみよう';
-  if (f.heardAboutChild && !f.rescuedChild) return 'やまびこ洞窟でタケシくんを救出しよう';
+  if (f.heardAboutChild && !f.rescuedChild) {
+    if (G.mapId.indexOf('cave') === 0 && !hasItem('lantern')) return '洞窟で明かり（ランタン）を見つけよう';
+    return 'やまびこ洞窟でタケシくんを救出しよう';
+  }
   if (!f.openedBakery) return '村の空き店舗でパン屋を開こう';
   if (f.openedBakery && !f.ending) return 'ひまわり村へ戻ろう';
   return 'Thank you for playing!';
