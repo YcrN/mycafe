@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CHOPLIFTER STORM - チョップリフターストーム</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#gameContainer {
+  position: relative;
+}
+canvas {
+  display: block;
+  border: 1px solid #333;
+}
+.padBtn {
+  display: none;
+  position: absolute;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: rgba(100, 100, 100, 0.3);
+  border: 3px solid rgba(150, 150, 150, 0.5);
+  color: #ccc;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  z-index: 20;
+  pointer-events: all;
+  text-align: center;
+  text-shadow: 0 0 3px #888;
+}
+#gunBtn { bottom: 24px; right: 16px; }
+#bombBtn { bottom: 110px; right: 30px; width: 64px; height: 64px; font-size: 11px; }
+.padBtn:active {
+  background: rgba(255, 120, 40, 0.5);
+  border-color: rgba(255, 210, 160, 0.9);
+  color: #fff;
+}
+@media (pointer: coarse) {
+  .padBtn { display: block; }
+}
+#overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.82);
+  color: #fff;
+  z-index: 30;
+  text-align: center;
+}
+#overlay h1 {
+  font-size: 34px;
+  color: #ffb347;
+  text-shadow: 0 0 12px #ff7300;
+  margin-bottom: 14px;
+  letter-spacing: 3px;
+}
+#overlay p {
+  font-size: 13px;
+  line-height: 1.9;
+  color: #ccc;
+  margin-bottom: 18px;
+}
+#startBtn {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  padding: 12px 42px;
+  background: #7a3c00;
+  color: #fff;
+  border: 2px solid #ffb347;
+  border-radius: 6px;
+  cursor: pointer;
+  text-shadow: 0 0 6px #ff7300;
+}
+#startBtn:active { background: #a65200; }
+</style>
+</head>
+<body>
+<div id="gameContainer">
+  <canvas id="game"></canvas>
+  <button id="bombBtn" class="padBtn">BOMB</button>
+  <button id="gunBtn" class="padBtn">GUN</button>
+  <div id="overlay">
+    <h1>CHOPLIFTER STORM</h1>
+    <p>
+      ヘリコプターで敵地に囚われた捕虜を救出せよ!<br>
+      兵舎を撃って捕虜を解放 → 近くに着陸して収容(最大8人)<br>
+      → 左端の基地に着陸して降ろすと救出完了!<br><br>
+      移動: 矢印キー / WASD(スマホ: 画面左をドラッグ)<br>
+      機銃: SPACE / Z(スマホ: GUNボタン)<br>
+      爆弾: X(スマホ: BOMBボタン)<br>
+      戦車とジェット機に注意。捕虜を巻き込むな!
+    </p>
+    <button id="startBtn">START</button>
+  </div>
+</div>
+<script>
+'use strict';
+
+// ===== 基本セットアップ =====
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = 800;
+const H = 480;
+canvas.width = W;
+canvas.height = H;
+
+const GROUND = H - 56;          // 地面のY座標
+const WORLD_W = 5600;           // ワールド全体の幅
+const BASE_X = 220;             // 味方基地(降機地点)のX座標
+const FENCE_X = 900;            // 国境フェンスのX座標
+const TOTAL_HOSTAGES = 32;      // 捕虜の総数
+const MAX_ABOARD = 8;           // 一度に乗せられる人数
+
+// 兵舎の配置(各8人収容)
+const BARRACK_XS = [1700, 2700, 3700, 4700];
+
+// ===== ゲーム状態 =====
+let state = 'title';            // title / play / gameover / clear
+let score = 0;
+let lives = 3;
+let rescued = 0;                // 救出済み
+let lost = 0;                   // 死亡した捕虜
+let frame = 0;
+let cameraX = 0;
+let shakeTime = 0;
+let gameoverTimer = 0;
+let messageText = '';
+let messageTimer = 0;
+
+let player = null;
+let hostages = [], barracks = [], tanks = [], jets = [];
+let bullets = [], bombs = [], shells = [], missiles = [], particles = [], clouds = [];
+
+// ===== 入力 =====
+const keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase())) e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+// タッチ操作: 画面左半分をバーチャルスティックとして扱う
+const touchStick = { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 };
+let touchGun = false;
+
+function canvasCoord(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (clientX - rect.left) * (W / rect.width),
+    y: (clientY - rect.top) * (H / rect.height)
+  };
+}
+
+function findTouch(touches, id) {
+  for (let i = 0; i < touches.length; i++) {
+    if (touches[i].identifier === id) return touches[i];
+  }
+  return null;
+}
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  for (const t of e.changedTouches) {
+    const p = canvasCoord(t.clientX, t.clientY);
+    if (p.x < W * 0.55 && !touchStick.active) {
+      touchStick.active = true;
+      touchStick.id = t.identifier;
+      touchStick.ox = p.x;
+      touchStick.oy = p.y;
+      touchStick.dx = 0;
+      touchStick.dy = 0;
+    }
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (!touchStick.active) return;
+  const t = findTouch(e.touches, touchStick.id);
+  if (!t) return;
+  const p = canvasCoord(t.clientX, t.clientY);
+  touchStick.dx = Math.max(-60, Math.min(60, p.x - touchStick.ox));
+  touchStick.dy = Math.max(-60, Math.min(60, p.y - touchStick.oy));
+}, { passive: false });
+
+function endTouch(e) {
+  for (const t of e.changedTouches) {
+    if (touchStick.active && t.identifier === touchStick.id) {
+      touchStick.active = false;
+      touchStick.dx = 0;
+      touchStick.dy = 0;
+    }
+  }
+}
+canvas.addEventListener('touchend', e => { e.preventDefault(); endTouch(e); }, { passive: false });
+canvas.addEventListener('touchcancel', () => {
+  touchStick.active = false;
+  touchStick.dx = 0;
+  touchStick.dy = 0;
+});
+
+const gunBtnEl = document.getElementById('gunBtn');
+const bombBtnEl = document.getElementById('bombBtn');
+gunBtnEl.addEventListener('touchstart', e => { e.preventDefault(); touchGun = true; }, { passive: false });
+gunBtnEl.addEventListener('touchend', e => { e.preventDefault(); touchGun = false; }, { passive: false });
+gunBtnEl.addEventListener('touchcancel', () => { touchGun = false; });
+bombBtnEl.addEventListener('touchstart', e => { e.preventDefault(); dropBomb(); }, { passive: false });
+
+// スタート操作(リトライのフリーズ防止のため多重起動をガード)
+let starting = false;
+function safeStartGame() {
+  if (starting || state === 'play') return;
+  starting = true;
+  startGame();
+  setTimeout(() => { starting = false; }, 300);
+}
+document.getElementById('startBtn').addEventListener('click', e => {
+  e.preventDefault();
+  safeStartGame();
+});
+document.getElementById('overlay').addEventListener('touchend', e => {
+  e.preventDefault();
+  safeStartGame();
+});
+
+// ===== 初期化 =====
+function initClouds() {
+  clouds = [];
+  for (let i = 0; i < 14; i++) {
+    clouds.push({
+      x: Math.random() * WORLD_W,
+      y: 30 + Math.random() * 140,
+      w: 60 + Math.random() * 90,
+      speed: 0.1 + Math.random() * 0.2
+    });
+  }
+}
+
+function startGame() {
+  state = 'play';
+  score = 0;
+  lives = 3;
+  rescued = 0;
+  lost = 0;
+  frame = 0;
+  shakeTime = 0;
+  messageTimer = 0;
+
+  player = {
+    x: BASE_X, y: GROUND - 18, vx: 0, vy: 0,
+    face: 1,                 // -1:左向き 1:右向き
+    turn: 1,                 // 描画用(faceへ滑らかに追従)
+    landed: true,
+    aboard: 0,               // 搭乗中の捕虜
+    invuln: 90,              // 無敵時間(リスポーン直後)
+    gunCool: 0,
+    bombCool: 0,
+    unloadCool: 0
+  };
+
+  hostages = [];
+  barracks = [];
+  BARRACK_XS.forEach(bx => {
+    barracks.push({ x: bx, hp: 6, alive: true, releaseTimer: 0, released: 0 });
+  });
+
+  tanks = [];
+  jets = [];
+  bullets = [];
+  bombs = [];
+  shells = [];
+  missiles = [];
+  particles = [];
+  initClouds();
+
+  document.getElementById('overlay').style.display = 'none';
+  showMessage('捕虜を救出せよ!', 120);
+}
+
+// ===== ユーティリティ =====
+function dist(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function showMessage(text, time) {
+  messageText = text;
+  messageTimer = time;
+}
+
+function spawnExplosion(x, y, count, color, speed, life) {
+  for (let i = 0; i < count; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const spd = Math.random() * speed;
+    particles.push({
+      x, y,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd - 1,
+      life: life + Math.random() * 15,
+      maxLife: life,
+      color
+    });
+  }
+}
+
+// 爆発の巻き添え判定(捕虜も死ぬ)
+function blastDamage(x, y, radius) {
+  hostages.forEach(h => {
+    if (h.state === 'running' || h.state === 'waiting') {
+      if (Math.hypot(h.x - x, h.y - y) < radius) killHostage(h);
+    }
+  });
+  tanks.forEach(t => {
+    if (t.alive && Math.hypot(t.x - x, t.y - y) < radius + 16) {
+      destroyTank(t);
+    }
+  });
+}
+
+function killHostage(h) {
+  h.state = 'dead';
+  lost++;
+  spawnExplosion(h.x, h.y - 6, 10, '#f66', 2, 20);
+  showMessage('捕虜が犠牲になった…', 90);
+  checkEnd();
+}
+
+function destroyTank(t) {
+  if (!t.alive) return;
+  t.alive = false;
+  score += 100;
+  spawnExplosion(t.x, t.y - 8, 26, '#ffa040', 4, 30);
+  shakeTime = 8;
+}
+
+function destroyJet(j) {
+  if (!j.alive) return;
+  j.alive = false;
+  score += 200;
+  spawnExplosion(j.x, j.y, 26, '#8cf', 4, 30);
+}
+
+// ===== 攻撃 =====
+function fireGun() {
+  if (player.gunCool > 0) return;
+  player.gunCool = 8;
+  const dir = player.face;
+  bullets.push({
+    x: player.x + dir * 26,
+    y: player.y + 2,
+    vx: dir * 11 + player.vx * 0.5,
+    vy: keys['arrowdown'] || keys['s'] || touchStick.dy > 25 ? 3.5 : 0.4,
+    life: 60
+  });
+}
+
+function dropBomb() {
+  if (state !== 'play' || player.bombCool > 0) return;
+  player.bombCool = 30;
+  bombs.push({ x: player.x, y: player.y + 12, vx: player.vx * 0.6, vy: 1 });
+}
+
+// ===== 敵の出現 =====
+function spawnTank() {
+  // 敵地内でプレイヤーからやや離れた場所に出現
+  const side = Math.random() < 0.5 ? -1 : 1;
+  let x = player.x + side * (450 + Math.random() * 250);
+  x = Math.max(FENCE_X + 60, Math.min(WORLD_W - 60, x));
+  tanks.push({ x, y: GROUND, alive: true, cool: 60 + Math.random() * 90, dir: 1 });
+}
+
+function spawnJet() {
+  const fromLeft = Math.random() < 0.5;
+  jets.push({
+    x: fromLeft ? cameraX - 60 : cameraX + W + 60,
+    y: 60 + Math.random() * 180,
+    vx: fromLeft ? 5 : -5,
+    alive: true,
+    fired: false
+  });
+}
+
+// ===== 兵舎から捕虜を解放 =====
+function releaseHostages(b) {
+  b.alive = false;
+  score += 150;
+  spawnExplosion(b.x, GROUND - 20, 32, '#ffcf70', 4, 35);
+  shakeTime = 10;
+  showMessage('捕虜が解放された! 近くに着陸して収容せよ!', 150);
+  for (let i = 0; i < 8; i++) {
+    hostages.push({
+      x: b.x + (Math.random() - 0.5) * 30,
+      y: GROUND,
+      home: b.x,
+      state: 'waiting',      // waiting / running / aboard / rescued / dead
+      walkPhase: Math.random() * Math.PI * 2,
+      wanderT: Math.random() * 120
+    });
+  }
+}
+
+// ===== 更新 =====
+function update() {
+  frame++;
+  if (messageTimer > 0) messageTimer--;
+  if (shakeTime > 0) shakeTime--;
+
+  if (state !== 'play') {
+    // ゲームオーバー/クリア後は一定時間でタイトルへ自動復帰
+    if (state === 'gameover' || state === 'clear') {
+      gameoverTimer--;
+      if (gameoverTimer <= 0) {
+        state = 'title';
+        document.getElementById('overlay').style.display = 'flex';
+      }
+    }
+    particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; });
+    particles = particles.filter(p => p.life > 0);
+    return;
+  }
+
+  updatePlayer();
+  updateHostages();
+  updateEnemies();
+  updateProjectiles();
+
+  // 雲
+  clouds.forEach(c => {
+    c.x += c.speed;
+    if (c.x > WORLD_W + 100) c.x = -100;
+  });
+
+  // パーティクル
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.06;
+    p.life--;
+  });
+  particles = particles.filter(p => p.life > 0);
+
+  // 敵の出現管理
+  const tankCap = 2 + Math.floor(rescued / 8);
+  if (tanks.filter(t => t.alive).length < tankCap && frame % 180 === 0 && player.x > FENCE_X - 300) {
+    spawnTank();
+  }
+  if (rescued + player.aboard >= 4 && frame % 480 === 0 && jets.filter(j => j.alive).length < 2) {
+    spawnJet();
+  }
+
+  // カメラ(進行方向の先を見せる)
+  const lookAhead = player.turn * 120;
+  const targetCam = player.x + lookAhead - W / 2;
+  cameraX += (targetCam - cameraX) * 0.08;
+  cameraX = Math.max(0, Math.min(WORLD_W - W, cameraX));
+}
+
+function updatePlayer() {
+  const p = player;
+  if (p.invuln > 0) p.invuln--;
+  if (p.gunCool > 0) p.gunCool--;
+  if (p.bombCool > 0) p.bombCool--;
+
+  // 入力 → 加速度
+  let ix = 0, iy = 0;
+  if (keys['arrowleft'] || keys['a']) ix -= 1;
+  if (keys['arrowright'] || keys['d']) ix += 1;
+  if (keys['arrowup'] || keys['w']) iy -= 1;
+  if (keys['arrowdown'] || keys['s']) iy += 1;
+  if (touchStick.active) {
+    ix += Math.max(-1, Math.min(1, touchStick.dx / 30));
+    iy += Math.max(-1, Math.min(1, touchStick.dy / 30));
+  }
+
+  p.vx += ix * 0.28;
+  p.vy += iy * 0.26;
+  p.vx *= 0.93;
+  p.vy *= 0.92;
+  p.vx = Math.max(-6, Math.min(6, p.vx));
+  p.vy = Math.max(-4.5, Math.min(4.5, p.vy));
+
+  if (ix < -0.2) p.face = -1;
+  if (ix > 0.2) p.face = 1;
+  p.turn += (p.face - p.turn) * 0.15;
+
+  p.x += p.vx;
+  p.y += p.vy;
+  p.x = Math.max(30, Math.min(WORLD_W - 30, p.x));
+  p.y = Math.max(24, p.y);
+
+  // 着陸判定
+  if (p.y >= GROUND - 18) {
+    p.y = GROUND - 18;
+    if (p.vy > 0) p.vy = 0;
+    p.landed = true;
+  } else {
+    p.landed = false;
+  }
+
+  // 射撃
+  if (keys[' '] || keys['z'] || touchGun) fireGun();
+  if (keys['x']) dropBomb();
+
+  // 基地で捕虜を降ろす
+  if (p.landed && Math.abs(p.x - BASE_X) < 90 && p.aboard > 0) {
+    if (p.unloadCool > 0) {
+      p.unloadCool--;
+    } else {
+      p.aboard--;
+      rescued++;
+      score += 500;
+      p.unloadCool = 18;
+      spawnExplosion(p.x - 20, GROUND - 8, 6, '#8f8', 1.5, 18);
+      showMessage('救出成功! ' + rescued + '/' + TOTAL_HOSTAGES + '人', 90);
+      checkEnd();
+    }
+  }
+}
+
+function updateHostages() {
+  const p = player;
+  hostages.forEach(h => {
+    if (h.state === 'dead' || h.state === 'aboard' || h.state === 'rescued') return;
+    h.walkPhase += 0.25;
+
+    // ヘリが近くに着陸していれば駆け寄る
+    if (p.landed && Math.abs(p.x - h.x) < 420 && p.aboard < MAX_ABOARD) {
+      h.state = 'running';
+      const dir = p.x > h.x ? 1 : -1;
+      h.x += dir * 1.6;
+      // 乗り込み
+      if (Math.abs(p.x - h.x) < 16) {
+        h.state = 'aboard';
+        p.aboard++;
+        score += 50;
+        showMessage('収容 ' + p.aboard + '/' + MAX_ABOARD + '人', 60);
+      }
+    } else {
+      // 手を振りながら兵舎跡の周りをうろつく
+      h.state = 'waiting';
+      h.wanderT--;
+      if (h.wanderT <= 0) {
+        h.wanderT = 60 + Math.random() * 120;
+        h.wanderDir = Math.random() < 0.5 ? -1 : 1;
+      }
+      if (Math.abs(h.x - h.home) < 80) {
+        h.x += (h.wanderDir || 1) * 0.4;
+      } else {
+        h.x += (h.home > h.x ? 1 : -1) * 0.4;
+      }
+    }
+  });
+}
+
+function updateEnemies() {
+  const p = player;
+
+  tanks.forEach(t => {
+    if (!t.alive) return;
+    // プレイヤー方向へ移動(敵地から出ない)
+    const dx = p.x - t.x;
+    if (Math.abs(dx) > 180) {
+      t.dir = dx > 0 ? 1 : -1;
+      t.x += t.dir * 0.7;
+      t.x = Math.max(FENCE_X + 30, Math.min(WORLD_W - 30, t.x));
+    }
+    // 砲撃
+    t.cool--;
+    if (t.cool <= 0 && Math.abs(dx) < 500) {
+      t.cool = 110 + Math.random() * 70;
+      const aim = Math.atan2(p.y - (t.y - 14), p.x - t.x);
+      const spd = 5;
+      shells.push({
+        x: t.x, y: t.y - 14,
+        vx: Math.cos(aim) * spd,
+        vy: Math.sin(aim) * spd - 0.5,
+        life: 140
+      });
+    }
+    // 捕虜を轢く
+    hostages.forEach(h => {
+      if ((h.state === 'running' || h.state === 'waiting') && Math.abs(h.x - t.x) < 14) {
+        killHostage(h);
+      }
+    });
+  });
+  tanks = tanks.filter(t => t.alive);
+
+  jets.forEach(j => {
+    if (!j.alive) return;
+    j.x += j.vx;
+    // プレイヤーの手前でミサイル発射
+    if (!j.fired && Math.abs(j.x - p.x) < 300 && !p.landed) {
+      j.fired = true;
+      missiles.push({ x: j.x, y: j.y, vx: j.vx * 0.8, vy: 0, life: 180 });
+    }
+    if (j.x < cameraX - 200 || j.x > cameraX + W + 200) j.alive = false;
+  });
+  jets = jets.filter(j => j.alive);
+}
+
+function updateProjectiles() {
+  const p = player;
+
+  // 自機の機銃弾
+  bullets.forEach(b => {
+    b.x += b.vx;
+    b.y += b.vy;
+    b.life--;
+    if (b.y >= GROUND) {
+      b.life = 0;
+      spawnExplosion(b.x, GROUND - 2, 3, '#ccc', 1.2, 10);
+    }
+    // 戦車ヒット
+    tanks.forEach(t => {
+      if (t.alive && Math.abs(b.x - t.x) < 18 && Math.abs(b.y - t.y + 10) < 14) {
+        destroyTank(t);
+        b.life = 0;
+      }
+    });
+    // ジェットヒット
+    jets.forEach(j => {
+      if (j.alive && Math.abs(b.x - j.x) < 20 && Math.abs(b.y - j.y) < 12) {
+        destroyJet(j);
+        b.life = 0;
+      }
+    });
+    // 兵舎ヒット
+    barracks.forEach(bar => {
+      if (bar.alive && Math.abs(b.x - bar.x) < 44 && b.y > GROUND - 52) {
+        bar.hp--;
+        b.life = 0;
+        spawnExplosion(b.x, b.y, 4, '#fc6', 1.5, 12);
+        if (bar.hp <= 0) releaseHostages(bar);
+      }
+    });
+    // 捕虜への誤射
+    hostages.forEach(h => {
+      if ((h.state === 'running' || h.state === 'waiting') &&
+          Math.abs(b.x - h.x) < 6 && Math.abs(b.y - (h.y - 8)) < 10) {
+        killHostage(h);
+        b.life = 0;
+      }
+    });
+  });
+  bullets = bullets.filter(b => b.life > 0);
+
+  // 爆弾
+  bombs.forEach(b => {
+    b.x += b.vx;
+    b.vy += 0.18;
+    b.y += b.vy;
+    if (b.y >= GROUND - 2) {
+      b.hit = true;
+      spawnExplosion(b.x, GROUND - 6, 30, '#ffa040', 4.5, 32);
+      shakeTime = 10;
+      blastDamage(b.x, GROUND, 60);
+      barracks.forEach(bar => {
+        if (bar.alive && Math.abs(b.x - bar.x) < 70) {
+          bar.hp -= 3;
+          if (bar.hp <= 0) releaseHostages(bar);
+        }
+      });
+    }
+  });
+  bombs = bombs.filter(b => !b.hit);
+
+  // 戦車の砲弾
+  shells.forEach(s => {
+    s.x += s.vx;
+    s.vy += 0.05;
+    s.y += s.vy;
+    s.life--;
+    if (s.y >= GROUND) {
+      s.life = 0;
+      spawnExplosion(s.x, GROUND - 4, 10, '#f96', 2.5, 18);
+      blastDamage(s.x, GROUND, 30);
+    }
+    if (p.invuln <= 0 && Math.abs(s.x - p.x) < 24 && Math.abs(s.y - p.y) < 16) {
+      s.life = 0;
+      playerHit();
+    }
+  });
+  shells = shells.filter(s => s.life > 0);
+
+  // ジェットのミサイル(緩い誘導)
+  missiles.forEach(m => {
+    const aim = Math.atan2(p.y - m.y, p.x - m.x);
+    m.vx += Math.cos(aim) * 0.25;
+    m.vy += Math.sin(aim) * 0.25;
+    const spd = Math.hypot(m.vx, m.vy);
+    if (spd > 6) { m.vx *= 6 / spd; m.vy *= 6 / spd; }
+    m.x += m.vx;
+    m.y += m.vy;
+    m.life--;
+    if (frame % 3 === 0) {
+      particles.push({ x: m.x, y: m.y, vx: 0, vy: 0, life: 12, maxLife: 12, color: '#aaa' });
+    }
+    if (m.y >= GROUND) {
+      m.life = 0;
+      spawnExplosion(m.x, GROUND - 4, 12, '#8cf', 2.5, 18);
+      blastDamage(m.x, GROUND, 30);
+    }
+    if (p.invuln <= 0 && Math.abs(m.x - p.x) < 24 && Math.abs(m.y - p.y) < 16) {
+      m.life = 0;
+      playerHit();
+    }
+  });
+  missiles = missiles.filter(m => m.life > 0);
+}
+
+function playerHit() {
+  const p = player;
+  spawnExplosion(p.x, p.y, 40, '#ffb347', 5, 40);
+  shakeTime = 20;
+  lives--;
+  // 搭乗中の捕虜も犠牲に
+  if (p.aboard > 0) {
+    lost += p.aboard;
+    showMessage('ヘリ撃墜! 捕虜' + p.aboard + '人を失った…', 150);
+    p.aboard = 0;
+  } else {
+    showMessage('ヘリ撃墜!', 120);
+  }
+  if (lives <= 0) {
+    endGame(false);
+    return;
+  }
+  if (allAccounted()) {
+    endGame(rescued > 0);
+    return;
+  }
+  // 基地からリスポーン
+  p.x = BASE_X;
+  p.y = GROUND - 18;
+  p.vx = 0;
+  p.vy = 0;
+  p.invuln = 120;
+  p.landed = true;
+}
+
+function allAccounted() {
+  return rescued + lost >= TOTAL_HOSTAGES;
+}
+
+function checkEnd() {
+  if (state !== 'play') return;
+  if (allAccounted() && player.aboard === 0) {
+    endGame(rescued > 0);
+  }
+}
+
+function endGame(cleared) {
+  state = cleared ? 'clear' : 'gameover';
+  gameoverTimer = 300;   // 5秒後にタイトルへ自動復帰
+  if (cleared) score += lives * 1000;
+}
+
+// ===== 描画 =====
+function draw() {
+  // 空(グラデーション)
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#0a1a3a');
+  sky.addColorStop(0.6, '#27456e');
+  sky.addColorStop(1, '#4a6584');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  let sx = 0, sy = 0;
+  if (shakeTime > 0) {
+    sx = (Math.random() - 0.5) * 8;
+    sy = (Math.random() - 0.5) * 8;
+  }
+  ctx.translate(-cameraX + sx, sy);
+
+  drawBackground();
+  drawBase();
+  barracks.forEach(drawBarrack);
+  hostages.forEach(drawHostage);
+  tanks.forEach(drawTank);
+  jets.forEach(drawJet);
+  drawProjectiles();
+  if (state === 'play' || particles.length > 0) drawPlayer();
+  drawParticles();
+
+  ctx.restore();
+
+  drawHUD();
+
+  if (state === 'gameover' || state === 'clear') drawResult();
+}
+
+function drawBackground() {
+  // 月
+  ctx.fillStyle = '#f5f0d8';
+  ctx.beginPath();
+  ctx.arc(cameraX + W - 110, 70, 26, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(10,26,58,0.35)';
+  ctx.beginPath();
+  ctx.arc(cameraX + W - 120, 64, 24, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 雲
+  ctx.fillStyle = 'rgba(220,230,240,0.25)';
+  clouds.forEach(c => {
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y, c.w, c.w * 0.32, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // 遠景の山(パララックス)
+  ctx.fillStyle = '#1c2f4a';
+  for (let i = -1; i < 8; i++) {
+    const mx = i * 900 - (cameraX * 0.3) % 900 + cameraX;
+    ctx.beginPath();
+    ctx.moveTo(mx, GROUND);
+    ctx.lineTo(mx + 280, GROUND - 130);
+    ctx.lineTo(mx + 560, GROUND);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // 地面
+  ctx.fillStyle = '#3a2e20';
+  ctx.fillRect(cameraX - 50, GROUND, W + 100, H - GROUND);
+  ctx.fillStyle = '#57422c';
+  ctx.fillRect(cameraX - 50, GROUND, W + 100, 6);
+
+  // 国境フェンス
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(FENCE_X + i * 8, GROUND);
+    ctx.lineTo(FENCE_X + i * 8, GROUND - 34);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(FENCE_X - 4, GROUND - 30);
+  ctx.lineTo(FENCE_X + 30, GROUND - 30);
+  ctx.moveTo(FENCE_X - 4, GROUND - 16);
+  ctx.lineTo(FENCE_X + 30, GROUND - 16);
+  ctx.stroke();
+}
+
+function drawBase() {
+  // ヘリパッド
+  ctx.fillStyle = '#555';
+  ctx.fillRect(BASE_X - 70, GROUND - 4, 140, 4);
+  ctx.fillStyle = '#ddd';
+  ctx.font = 'bold 22px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText('H', BASE_X, GROUND - 8);
+
+  // 基地の建物
+  ctx.fillStyle = '#2e4632';
+  ctx.fillRect(BASE_X - 190, GROUND - 46, 90, 46);
+  ctx.fillStyle = '#1d2f21';
+  ctx.fillRect(BASE_X - 172, GROUND - 30, 18, 30);
+  // 旗
+  ctx.strokeStyle = '#ccc';
+  ctx.beginPath();
+  ctx.moveTo(BASE_X - 100, GROUND - 46);
+  ctx.lineTo(BASE_X - 100, GROUND - 86);
+  ctx.stroke();
+  ctx.fillStyle = '#e33';
+  ctx.beginPath();
+  ctx.moveTo(BASE_X - 100, GROUND - 86);
+  ctx.lineTo(BASE_X - 70, GROUND - 78);
+  ctx.lineTo(BASE_X - 100, GROUND - 70);
+  ctx.closePath();
+  ctx.fill();
+  // 救出済みの捕虜が並ぶ
+  const shown = Math.min(rescued, 16);
+  ctx.fillStyle = '#8f8';
+  for (let i = 0; i < shown; i++) {
+    const hx = BASE_X - 200 - (i % 8) * 10;
+    const hy = GROUND - (Math.floor(i / 8)) * 0;
+    ctx.fillRect(hx - 1, hy - 12, 3, 8);
+    ctx.beginPath();
+    ctx.arc(hx, hy - 14, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBarrack(b) {
+  if (!b.alive) {
+    // 瓦礫
+    ctx.fillStyle = '#33291d';
+    ctx.beginPath();
+    ctx.moveTo(b.x - 44, GROUND);
+    ctx.lineTo(b.x - 20, GROUND - 14);
+    ctx.lineTo(b.x + 8, GROUND - 6);
+    ctx.lineTo(b.x + 30, GROUND - 16);
+    ctx.lineTo(b.x + 44, GROUND);
+    ctx.closePath();
+    ctx.fill();
+    return;
+  }
+  // 兵舎本体
+  ctx.fillStyle = '#5a5040';
+  ctx.fillRect(b.x - 44, GROUND - 44, 88, 44);
+  // 屋根
+  ctx.fillStyle = '#403828';
+  ctx.beginPath();
+  ctx.moveTo(b.x - 50, GROUND - 44);
+  ctx.lineTo(b.x, GROUND - 60);
+  ctx.lineTo(b.x + 50, GROUND - 44);
+  ctx.closePath();
+  ctx.fill();
+  // ドア・鉄格子
+  ctx.fillStyle = '#221c12';
+  ctx.fillRect(b.x - 12, GROUND - 30, 24, 30);
+  ctx.strokeStyle = '#777';
+  ctx.lineWidth = 2;
+  for (let i = -8; i <= 8; i += 8) {
+    ctx.beginPath();
+    ctx.moveTo(b.x + i, GROUND - 30);
+    ctx.lineTo(b.x + i, GROUND);
+    ctx.stroke();
+  }
+  // 耐久ゲージ
+  ctx.fillStyle = '#300';
+  ctx.fillRect(b.x - 30, GROUND - 68, 60, 5);
+  ctx.fillStyle = '#e55';
+  ctx.fillRect(b.x - 30, GROUND - 68, 60 * (b.hp / 6), 5);
+}
+
+function drawHostage(h) {
+  if (h.state === 'dead' || h.state === 'aboard' || h.state === 'rescued') return;
+  const bob = Math.sin(h.walkPhase) * 1.5;
+  ctx.fillStyle = '#f7d08a';
+  ctx.beginPath();
+  ctx.arc(h.x, h.y - 15, 3, 0, Math.PI * 2);   // 頭
+  ctx.fill();
+  ctx.strokeStyle = '#f7d08a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(h.x, h.y - 12);
+  ctx.lineTo(h.x, h.y - 5);                     // 胴体
+  // 脚
+  ctx.moveTo(h.x, h.y - 5);
+  ctx.lineTo(h.x - 2 - bob, h.y);
+  ctx.moveTo(h.x, h.y - 5);
+  ctx.lineTo(h.x + 2 + bob, h.y);
+  ctx.stroke();
+  // 腕(待機中は手を振る)
+  ctx.beginPath();
+  if (h.state === 'waiting') {
+    ctx.moveTo(h.x, h.y - 11);
+    ctx.lineTo(h.x + 3, h.y - 17 + bob);
+    ctx.moveTo(h.x, h.y - 11);
+    ctx.lineTo(h.x - 3, h.y - 8);
+  } else {
+    ctx.moveTo(h.x, h.y - 11);
+    ctx.lineTo(h.x + 3 + bob, h.y - 8);
+    ctx.moveTo(h.x, h.y - 11);
+    ctx.lineTo(h.x - 3 - bob, h.y - 8);
+  }
+  ctx.stroke();
+}
+
+function drawTank(t) {
+  ctx.save();
+  ctx.translate(t.x, t.y);
+  // キャタピラ
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(-20, -8, 40, 8);
+  ctx.fillStyle = '#555';
+  for (let i = -16; i <= 16; i += 8) {
+    ctx.beginPath();
+    ctx.arc(i, -4, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // 車体
+  ctx.fillStyle = '#4a5238';
+  ctx.fillRect(-18, -16, 36, 8);
+  // 砲塔
+  ctx.fillStyle = '#3c452c';
+  ctx.fillRect(-9, -22, 18, 7);
+  // 砲身(プレイヤー方向)
+  const aim = Math.atan2(player.y - (t.y - 18), player.x - t.x);
+  ctx.strokeStyle = '#3c452c';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, -19);
+  ctx.lineTo(Math.cos(aim) * 20, -19 + Math.sin(aim) * 20);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawJet(j) {
+  ctx.save();
+  ctx.translate(j.x, j.y);
+  if (j.vx < 0) ctx.scale(-1, 1);
+  ctx.fillStyle = '#7a8899';
+  ctx.beginPath();
+  ctx.moveTo(18, 0);
+  ctx.lineTo(-14, -5);
+  ctx.lineTo(-18, 0);
+  ctx.lineTo(-14, 5);
+  ctx.closePath();
+  ctx.fill();
+  // 主翼
+  ctx.fillStyle = '#5d6b7c';
+  ctx.beginPath();
+  ctx.moveTo(2, 0);
+  ctx.lineTo(-8, -9);
+  ctx.lineTo(-10, 0);
+  ctx.closePath();
+  ctx.fill();
+  // アフターバーナー
+  ctx.fillStyle = '#fc6';
+  ctx.fillRect(-24, -2, 6 + Math.random() * 5, 4);
+  ctx.restore();
+}
+
+function drawPlayer() {
+  const p = player;
+  if (state !== 'play') return;
+  if (p.invuln > 0 && Math.floor(frame / 4) % 2 === 0) return;   // 無敵中は点滅
+
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  // 旋回アニメ(scale(0)による消失を防ぐため最小幅を確保)
+  const turnScale = Math.abs(p.turn) < 0.15 ? (p.turn < 0 ? -0.15 : 0.15) : p.turn;
+  ctx.scale(turnScale, 1);
+
+  // 機体
+  ctx.fillStyle = '#3f5a3a';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 22, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // コックピット
+  ctx.fillStyle = '#9fd4ff';
+  ctx.beginPath();
+  ctx.ellipse(10, -2, 8, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // テールブーム
+  ctx.fillStyle = '#3f5a3a';
+  ctx.fillRect(-38, -3, 22, 5);
+  ctx.beginPath();
+  ctx.moveTo(-38, -3);
+  ctx.lineTo(-38, -14);
+  ctx.lineTo(-32, -3);
+  ctx.closePath();
+  ctx.fill();
+  // テールローター
+  ctx.strokeStyle = '#ccc';
+  ctx.lineWidth = 2;
+  const tr = Math.sin(frame * 0.9) * 8;
+  ctx.beginPath();
+  ctx.moveTo(-38, -8 - tr);
+  ctx.lineTo(-38, -8 + tr);
+  ctx.stroke();
+  // スキッド
+  ctx.strokeStyle = '#222';
+  ctx.beginPath();
+  ctx.moveTo(-14, 10);
+  ctx.lineTo(-16, 16);
+  ctx.moveTo(10, 10);
+  ctx.lineTo(12, 16);
+  ctx.moveTo(-22, 16);
+  ctx.lineTo(18, 16);
+  ctx.stroke();
+  // メインローター
+  const rot = Math.cos(frame * 0.9);
+  ctx.strokeStyle = 'rgba(220,220,220,0.85)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-30 * Math.abs(rot) - 4, -16);
+  ctx.lineTo(30 * Math.abs(rot) + 4, -16);
+  ctx.stroke();
+  ctx.strokeStyle = '#444';
+  ctx.beginPath();
+  ctx.moveTo(0, -6);
+  ctx.lineTo(0, -16);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // 搭乗人数の表示(ヘリの上)
+  if (p.aboard > 0) {
+    ctx.fillStyle = '#8f8';
+    ctx.font = '11px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('♦' + p.aboard, p.x, p.y - 30);
+  }
+}
+
+function drawProjectiles() {
+  // 機銃弾
+  ctx.fillStyle = '#ffe680';
+  bullets.forEach(b => {
+    ctx.fillRect(b.x - 3, b.y - 1, 6, 2);
+  });
+  // 爆弾
+  ctx.fillStyle = '#ddd';
+  bombs.forEach(b => {
+    ctx.beginPath();
+    ctx.ellipse(b.x, b.y, 3, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  // 砲弾
+  ctx.fillStyle = '#f96';
+  shells.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  // ミサイル
+  ctx.fillStyle = '#8cf';
+  missiles.forEach(m => {
+    ctx.save();
+    ctx.translate(m.x, m.y);
+    ctx.rotate(Math.atan2(m.vy, m.vx));
+    ctx.fillRect(-6, -2, 12, 4);
+    ctx.restore();
+  });
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawHUD() {
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(0, 0, W, 30);
+  ctx.fillStyle = '#fff';
+  ctx.font = '13px Courier New';
+  ctx.textAlign = 'left';
+  ctx.fillText('SCORE ' + score, 12, 20);
+  ctx.fillText('救出 ' + rescued + '/' + TOTAL_HOSTAGES, 150, 20);
+  ctx.fillStyle = '#8f8';
+  ctx.fillText('搭乗 ' + (player ? player.aboard : 0) + '/' + MAX_ABOARD, 290, 20);
+  ctx.fillStyle = '#f88';
+  ctx.fillText('犠牲 ' + lost, 410, 20);
+  // 残機
+  ctx.fillStyle = '#ffb347';
+  ctx.textAlign = 'right';
+  let lifeStr = '';
+  for (let i = 0; i < Math.max(0, lives); i++) lifeStr += '▲';
+  ctx.fillText('HELI ' + lifeStr, W - 12, 20);
+
+  // 基地への方向ガイド(捕虜搭乗中)
+  if (state === 'play' && player.aboard > 0 && player.x > BASE_X + 300) {
+    ctx.fillStyle = '#8f8';
+    ctx.font = 'bold 16px Courier New';
+    ctx.textAlign = 'left';
+    ctx.fillText('◀ 基地へ帰還せよ', 12, 52);
+  }
+
+  // メッセージ
+  if (messageTimer > 0) {
+    ctx.globalAlpha = Math.min(1, messageTimer / 30);
+    ctx.fillStyle = '#ffe680';
+    ctx.font = 'bold 16px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText(messageText, W / 2, 70);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawResult() {
+  ctx.fillStyle = 'rgba(0,0,0,0.65)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  if (state === 'clear') {
+    ctx.fillStyle = '#8f8';
+    ctx.font = 'bold 36px Courier New';
+    ctx.fillText('MISSION COMPLETE', W / 2, H / 2 - 60);
+  } else {
+    ctx.fillStyle = '#f66';
+    ctx.font = 'bold 40px Courier New';
+    ctx.fillText('GAME OVER', W / 2, H / 2 - 60);
+  }
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px Courier New';
+  ctx.fillText('救出: ' + rescued + '人   犠牲: ' + lost + '人', W / 2, H / 2 - 16);
+  ctx.fillText('SCORE: ' + score, W / 2, H / 2 + 14);
+  ctx.fillStyle = '#aaa';
+  ctx.font = '13px Courier New';
+  ctx.fillText('まもなくタイトルへ戻ります…', W / 2, H / 2 + 60);
+}
+
+// ===== リサイズ =====
+function resizeCanvas() {
+  const scale = Math.min(window.innerWidth / W, window.innerHeight / H);
+  canvas.style.width = Math.floor(W * scale) + 'px';
+  canvas.style.height = Math.floor(H * scale) + 'px';
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+initClouds();   // タイトル画面の背景用
+
+// ===== メインループ =====
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
